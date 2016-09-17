@@ -6,6 +6,7 @@ import scala.collection.JavaConverters._
 import org.scalacheck._, Prop._
 import org.eclipse.jgit.api._
 import sbtdynver._
+import RepoStates._
 
 object DynVerSpec extends Properties("DynVerSpec") {
   property("not a git repo")                                = notAGitRepo().version()         ?= "HEAD+20160917"
@@ -16,7 +17,9 @@ object DynVerSpec extends Properties("DynVerSpec") {
   property("on tag v1.0.0 with local changes")              = onTagDirty().version()          ?= "1.0.0+20160917"
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().version()      ?= "1.0.0+1-1234abcd"
   property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().version() ?= "1.0.0+1-1234abcd+20160917"
+}
 
+object RepoStates {
   def notAGitRepo()         = State()
   def noCommits()           = notAGitRepo().init()
   def onCommit()            = noCommits().commit()
@@ -44,7 +47,8 @@ object DynVerSpec extends Properties("DynVerSpec") {
       sha = git.commit().setMessage("1").call().abbreviate(8).name()
     }
 
-    def version() = dynver.version().replaceAllLiterally(sha, "1234abcd")
+    def version()    = dynver.version().replaceAllLiterally(sha, "1234abcd")
+    def isSnapshot() = dynver.isSnapshot()
 
     private def doalso[A, U](x: A)(xs: U*)  = x
     private def doto[A, U](x: A)(f: A => U) = doalso(x)(f(x))
