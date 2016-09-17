@@ -1,0 +1,4 @@
+Test if requriements can be lowered from JvmPlugin
+Test scripted no git and tag + commmits + dirty
+Test isSnapshot
+Switch to java.time

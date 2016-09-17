@@ -8,29 +8,23 @@ import org.eclipse.jgit.api._
 import sbtdynver._
 
 object DynVerSpec extends Properties("DynVerSpec") {
-  property("not a git repo") = notAGitRepo()
-  property("no commits") = noCommits()
-  property("on commit, w/o local changes") = onCommit()
-  property("on commit with local changes") = onCommitDirty()
-  property("on tag v1.0.0, w/o local changes") = onTag()
-  property("on tag v1.0.0 with local changes") = onTagDirty()
-  property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit()
-  property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty()
+  property("not a git repo")                                = notAGitRepo().version()         ?= "HEAD+20160917"
+  property("no commits")                                    = noCommits().version()           ?= "HEAD+20160917"
+  property("on commit, w/o local changes")                  = onCommit().version()            ?= "1234abcd"
+  property("on commit with local changes")                  = onCommitDirty().version()       ?= "1234abcd+20160917"
+  property("on tag v1.0.0, w/o local changes")              = onTag().version()               ?= "1.0.0"
+  property("on tag v1.0.0 with local changes")              = onTagDirty().version()          ?= "1.0.0+20160917"
+  property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().version()      ?= "1.0.0+1-1234abcd"
+  property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().version() ?= "1.0.0+1-1234abcd+20160917"
 
-  def notAGitRepo(): Prop = State().version()        ?= "HEAD+20160917"
-  def noCommits(): Prop   = State().init().version() ?= "HEAD+20160917"
-
-  def onCommit(): Prop = State().init().commit().version() ?= "1234abcd"
-
-  def onCommitDirty(): Prop = State().init().commit().dirty().version() ?= "1234abcd+20160917"
-
-  def onTag(): Prop = State().init().commit().tag().version() ?= "1.0.0"
-
-  def onTagDirty(): Prop = State().init().commit().tag().dirty().version() ?= "1.0.0+20160917"
-
-  def onTagAndCommit(): Prop = State().init().commit().tag().commit().version() ?= "1.0.0+1-1234abcd"
-
-  def onTagAndCommitDirty(): Prop = State().init().commit().tag().commit().dirty().version() ?= "1.0.0+1-1234abcd+20160917"
+  def notAGitRepo()         = State()
+  def noCommits()           = notAGitRepo().init()
+  def onCommit()            = noCommits().commit()
+  def onCommitDirty()       = onCommit().dirty()
+  def onTag()               = onCommit().tag()
+  def onTagDirty()          = onTag().dirty()
+  def onTagAndCommit()      = onTag().commit()
+  def onTagAndCommitDirty() = onTagAndCommit().dirty()
 
   final case class State() {
     val dir = Files.createTempDirectory(s"dynver-test-").toFile
