@@ -20,75 +20,54 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
   def tagClean(): Prop = {
     val git = newRepo()
-
     writeToFile(git)
     commit(git)
-
-    git.tag().setName("v1.0.0").setAnnotated(true).call()
-
+    tag(git)
     version(git) ?= "1.0.0"
   }
 
   def tagDirty(): Prop = {
     val git = newRepo()
-
     writeToFile(git)
     commit(git)
-
-    git.tag().setName("v1.0.0").setAnnotated(true).call()
-
+    tag(git)
     writeToFile(git)
-
     version(git) ?= "1.0.0+20160917"
   }
 
   def tagChangesClean(): Prop = {
     val git = newRepo()
-
     writeToFile(git)
     commit(git)
-
-    git.tag().setName("v1.0.0").setAnnotated(true).call()
-
+    tag(git)
     writeToFile(git)
     val sha = commit(git)
-
     version(git) ?= s"1.0.0+1-$sha"
   }
 
   def tagChangesDirty(): Prop = {
     val git = newRepo()
-
     writeToFile(git)
     commit(git)
-
-    git.tag().setName("v1.0.0").setAnnotated(true).call()
-
+    tag(git)
     writeToFile(git)
     val sha = commit(git)
-
     writeToFile(git)
-
     version(git) ?= s"1.0.0+1-$sha+20160917"
   }
 
   def noTagsClean(): Prop = {
     val git = newRepo()
-
     writeToFile(git)
     val sha = commit(git)
-
     version(git) ?= sha
   }
 
   def noTagsDirty(): Prop = {
     val git = newRepo()
-
     writeToFile(git)
     val sha = commit(git)
-
     writeToFile(git)
-
     version(git) ?= s"$sha+20160917"
   }
 
@@ -108,6 +87,8 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val commit = git.commit().setMessage("1").call()
     commit.abbreviate(8).name()
   }
+
+  def tag(git: Git) =  git.tag().setName("v1.0.0").setAnnotated(true).call()
 
   private def version(git: Git) = versionAtDir(git.getRepository.getWorkTree)
 
