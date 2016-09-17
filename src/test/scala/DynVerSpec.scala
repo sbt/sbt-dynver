@@ -22,10 +22,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val git = newRepo()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    git.commit().setMessage("1").call()
+    commit(git)
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
@@ -36,10 +33,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val git = newRepo()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    git.commit().setMessage("1").call()
+    commit(git)
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
@@ -52,20 +46,12 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val git = newRepo()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    git.commit().setMessage("1").call()
+    commit(git)
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    val commit = git.commit().setMessage("2").call()
-
-    val sha = commit.abbreviate(8).name()
+    val sha = commit(git)
 
     version(git) ?= s"1.0.0+1-$sha"
   }
@@ -74,20 +60,12 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val git = newRepo()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    git.commit().setMessage("1").call()
+    commit(git)
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    val commit = git.commit().setMessage("2").call()
-
-    val sha = commit.abbreviate(8).name()
+    val sha = commit(git)
 
     writeToFile(git)
 
@@ -98,12 +76,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val git = newRepo()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    val commit = git.commit().setMessage("1").call()
-
-    val sha = commit.abbreviate(8).name()
+    val sha = commit(git)
 
     version(git) ?= sha
   }
@@ -112,12 +85,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val git = newRepo()
 
     writeToFile(git)
-
-    git.add().addFilepattern(".").call()
-
-    val commit = git.commit().setMessage("1").call()
-
-    val sha = commit.abbreviate(8).name()
+    val sha = commit(git)
 
     writeToFile(git)
 
@@ -133,6 +101,12 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def writeToFile(git: Git) = {
     val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
+  }
+
+  private def commit(git: Git) = {
+    git.add().addFilepattern(".").call()
+    val commit = git.commit().setMessage("1").call()
+    commit.abbreviate(8).name()
   }
 
   private def version(git: Git) = versionAtDir(git.getRepository.getWorkTree)
