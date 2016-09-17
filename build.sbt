@@ -30,5 +30,10 @@ libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.13.2"      
              fork in Test := false
       logBuffered in Test := false
 parallelExecution in Test := true
+             test         := { (test in Test).value ; scripted.toTask("").value }
+
+scriptedSettings
+scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
+scriptedBufferLog := false
 
 cancelable in Global := true

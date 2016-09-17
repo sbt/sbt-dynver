@@ -1,0 +1,32 @@
+> checkNotAGitRepo
+
+$ exec git init
+> reload
+> checkNoCommits
+
+> dirty
+$ exec git add .
+$ exec git commit -m1
+> reload
+> checkOnCommit
+
+> dirty
+> reload
+> checkOnCommitDirty
+
+$ exec git commit -am2
+$ exec git tag -a v1.0.0 -m1.0.0
+> reload
+> checkOnTag
+
+> dirty
+> reload
+> checkOnTagDirty
+
+$ exec git commit -am3
+> reload
+> checkOnTagAndCommit
+
+> dirty
+> reload
+> checkOnTagAndCommitDirty
