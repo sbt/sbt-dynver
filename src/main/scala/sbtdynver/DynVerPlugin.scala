@@ -10,22 +10,29 @@ object DynVerPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger  = allRequirements
 
-  private val dynver = DynVer(None, RealClock)
+  object autoImport {
+    val dynverCurrentDate = settingKey[Date]("The current date, for dynver purposes")
+  }
+  import autoImport._
+
+  private val dynver = DynVer(None)
 
   override def buildSettings = Seq(
-       version := dynver.version(),
-    isSnapshot := dynver.isSnapshot()
+       version := dynver.version(dynverCurrentDate.value),
+    isSnapshot := dynver.isSnapshot(),
+
+    dynverCurrentDate := new Date
   )
 }
 
-final case class DynVer(wd: Option[File], clock: Clock) {
-  def version(): String     = makeDynVer() getOrElse s"HEAD+$currentYearMonthDay"
-  def isSnapshot(): Boolean = isDirty() || hasNoTags()
+final case class DynVer(wd: Option[File]) {
+  def version(d: Date): String = makeDynVer(d) getOrElse s"HEAD+${currentYearMonthDay(d)}"
+  def isSnapshot(): Boolean    = isDirty() || hasNoTags()
 
-  def currentYearMonthDay(): String = "%1$tY%1$tm%1$td" format clock.now()
+  def currentYearMonthDay(d: Date): String = "%1$tY%1$tm%1$td" format d
 
-  def makeDynVer(): Option[String] = {
-    Try(Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+$currentYearMonthDay""", wd).!!)
+  def makeDynVer(d: Date): Option[String] = {
+    Try(Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+${currentYearMonthDay(d)}""", wd).!!)
       .toOption.map(_
         .init
         .replaceAll("^v", "")
@@ -40,12 +47,4 @@ final case class DynVer(wd: Option[File], clock: Clock) {
     Try(Process("git for-each-ref --format %(objecttype) refs/tags/", wd).!!)
       .map(_.linesIterator.forall(_ startsWith "commit"))
       .getOrElse(true)
-}
-
-abstract class Clock private[sbtdynver]() {
-  def now(): Date
-}
-
-object RealClock extends Clock {
-  def now(): Date = new Date()
 }

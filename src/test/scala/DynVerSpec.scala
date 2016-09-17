@@ -42,8 +42,8 @@ object RepoStates {
 
   final case class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
-    val fakeClock = FakeClock(new GregorianCalendar(2016, 8, 17).getTime)
-    val dynver = DynVer(Some(dir), fakeClock)
+    val date = new GregorianCalendar(2016, 8, 17).getTime
+    val dynver = DynVer(Some(dir))
 
     var git: Git = _
     var sha: String = "undefined"
@@ -58,7 +58,7 @@ object RepoStates {
       sha = git.commit().setMessage("1").call().abbreviate(8).name()
     }
 
-    def version()    = dynver.version().replaceAllLiterally(sha, "1234abcd")
+    def version()    = dynver.version(date).replaceAllLiterally(sha, "1234abcd")
     def isSnapshot() = dynver.isSnapshot()
 
     private def doalso[A, U](x: A)(xs: U*)  = x
