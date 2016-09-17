@@ -19,11 +19,9 @@ object DynVerSpec extends Properties("DynVerSpec") {
   property("when not a git repo") = noGitRepo()
 
   def tagClean(): Prop = {
-    val dir = createTempDir()
+    val git = newRepo()
 
-    val git = Git.init().setDirectory(dir).call()
-
-    val file = dir.toPath.resolve("f.txt")
+    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
 
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
 
@@ -33,15 +31,13 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
-    version(dir) ?= "1.0.0"
+    version(git) ?= "1.0.0"
   }
 
   def tagDirty(): Prop = {
-    val dir = createTempDir()
+    val git = newRepo()
 
-    val git = Git.init().setDirectory(dir).call()
-
-    val file = dir.toPath.resolve("f.txt")
+    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
 
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
 
@@ -53,15 +49,13 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("2").asJava, CREATE, APPEND)
 
-    version(dir) ?= "1.0.0+20160917"
+    version(git) ?= "1.0.0+20160917"
   }
 
   def tagChangesClean(): Prop = {
-    val dir = createTempDir()
+    val git = newRepo()
 
-    val git = Git.init().setDirectory(dir).call()
-
-    val file = dir.toPath.resolve("f.txt")
+    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
 
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
 
@@ -79,15 +73,13 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    version(dir) ?= s"1.0.0+1-$sha"
+    version(git) ?= s"1.0.0+1-$sha"
   }
 
   def tagChangesDirty(): Prop = {
-    val dir = createTempDir()
+    val git = newRepo()
 
-    val git = Git.init().setDirectory(dir).call()
-
-    val file = dir.toPath.resolve("f.txt")
+    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
 
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
 
@@ -107,15 +99,13 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("3").asJava, CREATE, APPEND)
 
-    version(dir) ?= s"1.0.0+1-$sha+20160917"
+    version(git) ?= s"1.0.0+1-$sha+20160917"
   }
 
   def noTagsClean(): Prop = {
-    val dir = createTempDir()
+    val git = newRepo()
 
-    val git = Git.init().setDirectory(dir).call()
-
-    val file = dir.toPath.resolve("f.txt")
+    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
 
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
 
@@ -125,15 +115,13 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    version(dir) ?= sha
+    version(git) ?= sha
   }
 
   def noTagsDirty(): Prop = {
-    val dir = createTempDir()
+    val git = newRepo()
 
-    val git = Git.init().setDirectory(dir).call()
-
-    val file = dir.toPath.resolve("f.txt")
+    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
 
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
 
@@ -145,22 +133,14 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("2").asJava, CREATE, APPEND)
 
-    version(dir) ?= s"$sha+20160917"
+    version(git) ?= s"$sha+20160917"
   }
 
-  def noCommits(): Prop = {
-    val dir = createTempDir()
+  def noCommits(): Prop = version(newRepo())            ?= "HEAD+20160917"
+  def noGitRepo(): Prop = versionAtDir(createTempDir()) ?= "HEAD+20160917"
 
-    Git.init().setDirectory(dir).call()
 
-    version(dir) ?= "HEAD+20160917"
-  }
-
-  def noGitRepo(): Prop = {
-    val dir = createTempDir()
-
-    version(dir) ?= "HEAD+20160917"
-  }
+  private def newRepo() = Git.init().setDirectory(createTempDir()).call()
 
   private def createTempDir() = {
     val dir = Files.createTempDirectory(s"dynver-test-").toFile
@@ -170,5 +150,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
   private val fakeClock = FakeClock(new GregorianCalendar(2016, 9, 17).getTime)
 
-  private def version(dir: File): String = DynVer(Some(dir), fakeClock).version()
+  private def version(git: Git) = versionAtDir(git.getRepository.getWorkTree)
+
+  private def versionAtDir(dir: File) = DynVer(Some(dir), fakeClock).version()
 }
