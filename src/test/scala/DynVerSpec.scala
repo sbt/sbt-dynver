@@ -9,14 +9,32 @@ import org.eclipse.jgit.api._
 import sbtdynver._
 
 object DynVerSpec extends Properties("DynVerSpec") {
-  property("when on v1.0.0 tag, w/o local changes") = tagClean()
-  property("when on v1.0.0 tag with local changes") = tagDirty()
-  property("when on commit 1234abcd: 1 commits after v1.0.0 tag, w/o local changes") = tagChangesClean()
-  property("when on commit 1234abcd: 1 commits after v1.0.0 tag with local changes") = tagChangesDirty()
-  property("when there are no tags, on commit 1234abcd, w/o local changes") = noTagsClean()
-  property("when there are no tags, on commit 1234abcd with local changes") = noTagsDirty()
-  property("when there are no commits") = noCommits()
-  property("when not a git repo") = noGitRepo()
+  property("not a git repo") = noGitRepo()
+  property("no commits") = noCommits()
+  property("on commit, w/o local changes") = noTagsClean()
+  property("on commit with local changes") = noTagsDirty()
+  property("on tag v1.0.0, w/o local changes") = tagClean()
+  property("on tag v1.0.0 with local changes") = tagDirty()
+  property("on 1 commit after v1.0.0 tag, w/o local changes") = tagChangesClean()
+  property("on 1 commit after v1.0.0 tag with local changes") = tagChangesDirty()
+
+  def noGitRepo(): Prop = versionAtDir(createTempDir()) ?= "HEAD+20160917"
+  def noCommits(): Prop = version(newRepo())            ?= "HEAD+20160917"
+
+  def noTagsClean(): Prop = {
+    val git = newRepo()
+    writeToFile(git)
+    val sha = commit(git)
+    version(git) ?= sha
+  }
+
+  def noTagsDirty(): Prop = {
+    val git = newRepo()
+    writeToFile(git)
+    val sha = commit(git)
+    writeToFile(git)
+    version(git) ?= s"$sha+20160917"
+  }
 
   def tagClean(): Prop = {
     val git = newRepo()
@@ -55,24 +73,6 @@ object DynVerSpec extends Properties("DynVerSpec") {
     writeToFile(git)
     version(git) ?= s"1.0.0+1-$sha+20160917"
   }
-
-  def noTagsClean(): Prop = {
-    val git = newRepo()
-    writeToFile(git)
-    val sha = commit(git)
-    version(git) ?= sha
-  }
-
-  def noTagsDirty(): Prop = {
-    val git = newRepo()
-    writeToFile(git)
-    val sha = commit(git)
-    writeToFile(git)
-    version(git) ?= s"$sha+20160917"
-  }
-
-  def noCommits(): Prop = version(newRepo())            ?= "HEAD+20160917"
-  def noGitRepo(): Prop = versionAtDir(createTempDir()) ?= "HEAD+20160917"
 
 
   private def newRepo() = Git.init().setDirectory(createTempDir()).call()
