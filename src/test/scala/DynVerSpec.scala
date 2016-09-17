@@ -20,7 +20,7 @@ object VersionSpec extends Properties("VersionSpec") {
 }
 
 object IsSnapshotSpec extends Properties("IsSnapshotSpec") {
-//  property("not a git repo")                                = notAGitRepo().isSnapshot()         ?= true
+  property("not a git repo")                                = notAGitRepo().isSnapshot()         ?= true
   property("no commits")                                    = noCommits().isSnapshot()           ?= true
   property("on commit, w/o local changes")                  = onCommit().isSnapshot()            ?= true
   property("on commit with local changes")                  = onCommitDirty().isSnapshot()       ?= true

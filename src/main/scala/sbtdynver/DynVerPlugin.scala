@@ -40,10 +40,13 @@ final case class DynVer(wd: Option[File], clock: Clock) {
       )
   }
 
-  def isDirty(): Boolean = Process("git status --untracked-files=no --porcelain", wd).!!.nonEmpty
+  def isDirty(): Boolean =
+    Try(Process("git status --untracked-files=no --porcelain", wd).!!).map(_.nonEmpty).getOrElse(true)
 
-  def hasNoTags(): Boolean = Process("git for-each-ref --format %(objecttype) refs/tags/", wd).!!
-    .linesIterator.forall(_ startsWith "commit")
+  def hasNoTags(): Boolean =
+    Try(Process("git for-each-ref --format %(objecttype) refs/tags/", wd).!!)
+      .map(_.linesIterator.forall(_ startsWith "commit"))
+      .getOrElse(true)
 }
 
 abstract class Clock private[sbtdynver]() {
