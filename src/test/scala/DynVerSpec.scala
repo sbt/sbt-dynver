@@ -21,9 +21,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def tagClean(): Prop = {
     val git = newRepo()
 
-    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
-
-    Files.write(file, Seq("1").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -37,9 +35,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def tagDirty(): Prop = {
     val git = newRepo()
 
-    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
-
-    Files.write(file, Seq("1").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -47,7 +43,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
-    Files.write(file, Seq("2").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     version(git) ?= "1.0.0+20160917"
   }
@@ -55,9 +51,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def tagChangesClean(): Prop = {
     val git = newRepo()
 
-    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
-
-    Files.write(file, Seq("1").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -65,7 +59,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
-    Files.write(file, Seq("2").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -79,9 +73,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def tagChangesDirty(): Prop = {
     val git = newRepo()
 
-    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
-
-    Files.write(file, Seq("1").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -89,7 +81,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
-    Files.write(file, Seq("2").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -97,7 +89,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    Files.write(file, Seq("3").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     version(git) ?= s"1.0.0+1-$sha+20160917"
   }
@@ -105,9 +97,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def noTagsClean(): Prop = {
     val git = newRepo()
 
-    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
-
-    Files.write(file, Seq("1").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -121,9 +111,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def noTagsDirty(): Prop = {
     val git = newRepo()
 
-    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
-
-    Files.write(file, Seq("1").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     git.add().addFilepattern(".").call()
 
@@ -131,7 +119,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    Files.write(file, Seq("2").asJava, CREATE, APPEND)
+    writeToFile(git)
 
     version(git) ?= s"$sha+20160917"
   }
@@ -142,6 +130,15 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
   private def newRepo() = Git.init().setDirectory(createTempDir()).call()
 
+  def writeToFile(git: Git) = {
+    val file = git.getRepository.getWorkTree.toPath.resolve("f.txt")
+    Files.write(file, Seq("1").asJava, CREATE, APPEND)
+  }
+
+  private def version(git: Git) = versionAtDir(git.getRepository.getWorkTree)
+
+  private def versionAtDir(dir: File) = DynVer(Some(dir), fakeClock).version()
+
   private def createTempDir() = {
     val dir = Files.createTempDirectory(s"dynver-test-").toFile
     dir.deleteOnExit()
@@ -149,8 +146,4 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   private val fakeClock = FakeClock(new GregorianCalendar(2016, 9, 17).getTime)
-
-  private def version(git: Git) = versionAtDir(git.getRepository.getWorkTree)
-
-  private def versionAtDir(dir: File) = DynVer(Some(dir), fakeClock).version()
 }
