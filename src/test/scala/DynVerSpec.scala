@@ -15,7 +15,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   property("when on commit 1234abcd: 3 commits after v1.0.0 tag with local changes") = tagChangesDirty()
   property("when there are no tags, on commit 1234abcd, w/o local changes") = noTagsClean()
   property("when there are no tags, on commit 1234abcd with local changes") = noTagsDirty()
-  property("when there are no commits") = passed
+  property("when there are no commits") = noCommits()
   property("when not a git repo") = passed
 
   def tagClean(): Prop = {
@@ -164,5 +164,16 @@ object DynVerSpec extends Properties("DynVerSpec") {
     val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
 
     dynver.version() ?= s"$sha+20160917"
+  }
+
+  def noCommits(): Prop = {
+    val dir = Files.createTempDirectory("dynver-test-tag-changes-clean-").toFile
+    dir.deleteOnExit()
+
+    val git = Git.init().setDirectory(dir).call()
+
+    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+
+    dynver.version() ?= "HEAD+20160917"
   }
 }

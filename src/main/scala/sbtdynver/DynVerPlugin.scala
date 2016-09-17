@@ -2,6 +2,8 @@ package sbtdynver
 
 import java.util._
 
+import scala.util._
+
 import sbt._, Keys._
 
 object DynverPlugin extends AutoPlugin {
@@ -19,7 +21,7 @@ object DynverPlugin extends AutoPlugin {
 final case class DynVer(wd: Option[File], clock: Clock) {
   def version(): String = {
     def overrideVersion = sys.props get "project.version"
-    def   dynverVersion = Some(makeDynVer())
+    def   dynverVersion = makeDynVer()
     def    datedVersion = s"HEAD+$currentYearMonthDay"
 
     Seq(overrideVersion, dynverVersion) reduce (_ orElse _) getOrElse datedVersion
@@ -29,10 +31,13 @@ final case class DynVer(wd: Option[File], clock: Clock) {
 
   def currentYearMonthDay(): String = "%1$tY%1$tm%1$td" format new Date
 
-  def makeDynVer(): String = {
-    Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+$currentYearMonthDay""", wd).!!.init
-      .replaceAll("^v", "")
-      .replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2")
+  def makeDynVer(): Option[String] = {
+    Try(Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+$currentYearMonthDay""", wd).!!)
+      .toOption.map(_
+        .init
+        .replaceAll("^v", "")
+        .replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2")
+      )
   }
 
   def isDirty(): Boolean = Process("git status --untracked-files=no --porcelain", wd).!!.nonEmpty
