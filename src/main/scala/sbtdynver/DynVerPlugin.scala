@@ -22,7 +22,7 @@ final case class DynVer(wd: Option[File], clock: Clock) {
   def version(): String     = makeDynVer() getOrElse s"HEAD+$currentYearMonthDay"
   def isSnapshot(): Boolean = isDirty() || hasNoTags()
 
-  def currentYearMonthDay(): String = "%1$tY%1$tm%1$td" format new Date
+  def currentYearMonthDay(): String = "%1$tY%1$tm%1$td" format clock.now()
 
   def makeDynVer(): Option[String] = {
     Try(Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+$currentYearMonthDay""", wd).!!)

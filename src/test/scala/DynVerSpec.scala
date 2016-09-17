@@ -42,7 +42,7 @@ object RepoStates {
 
   final case class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
-    val fakeClock = FakeClock(new GregorianCalendar(2016, 9, 17).getTime)
+    val fakeClock = FakeClock(new GregorianCalendar(2016, 8, 17).getTime)
     val dynver = DynVer(Some(dir), fakeClock)
 
     var git: Git = _
