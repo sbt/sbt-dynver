@@ -27,10 +27,14 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("1").asJava, CREATE, APPEND)
 
+    git.add().addFilepattern(".").call()
+
     git.commit().setMessage("1").call()
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
-    DynVer(Some(dir)).version() ?= "1.0.0"
+    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+
+    dynver.version() ?= "1.0.0"
   }
 }

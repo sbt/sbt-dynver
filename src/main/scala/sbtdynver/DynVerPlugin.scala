@@ -1,12 +1,14 @@
 package sbtdynver
 
+import java.util._
+
 import sbt._, Keys._
 
 object DynverPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger  = allRequirements
 
-  private val dynver = DynVer(None)
+  private val dynver = DynVer(None, RealClock)
 
   override def buildSettings = Seq(
        version := dynver.version(),
@@ -14,7 +16,7 @@ object DynverPlugin extends AutoPlugin {
   )
 }
 
-final case class DynVer(wd: Option[File]) {
+final case class DynVer(wd: Option[File], clock: Clock) {
   def version() = {
     def overrideVersion = Option(sys props "project.version")
     def   dynverVersion = Some(makeDynVer())
@@ -25,7 +27,7 @@ final case class DynVer(wd: Option[File]) {
 
   def isSnapshot() = isDirty() || hasNoTags()
 
-  def currentYearMonthDay() = "%1$tY%1$tm%1$td" format new java.util.Date
+  def currentYearMonthDay() = "%1$tY%1$tm%1$td" format new Date
 
   def makeDynVer() = {
     Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+$currentYearMonthDay""", wd).!!.init
@@ -37,4 +39,12 @@ final case class DynVer(wd: Option[File]) {
 
   def hasNoTags() = Process("git for-each-ref --format %(objecttype) refs/tags/", wd).!!
     .linesIterator.forall(_ startsWith "commit")
+}
+
+abstract class Clock private[sbtdynver]() {
+  def now(): Date
+}
+
+object RealClock extends Clock {
+  def now(): Date = new Date()
 }
