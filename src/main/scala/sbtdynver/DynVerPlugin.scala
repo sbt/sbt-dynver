@@ -6,7 +6,7 @@ import scala.util._
 
 import sbt._, Keys._
 
-object DynverPlugin extends AutoPlugin {
+object DynVerPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger  = allRequirements
 
