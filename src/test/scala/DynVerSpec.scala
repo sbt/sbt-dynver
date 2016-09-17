@@ -1,11 +1,11 @@
 import java.nio.file._, StandardOpenOption._
+import java.io._
 import java.util.{ Properties => _, _ }
 
 import scala.collection.JavaConverters._
 
 import org.scalacheck._, Prop._
 import org.eclipse.jgit.api._
-
 import sbtdynver._
 
 object DynVerSpec extends Properties("DynVerSpec") {
@@ -19,8 +19,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   property("when not a git repo") = passed
 
   def tagClean(): Prop = {
-    val dir = Files.createTempDirectory("dynver-test-tag-clean-").toFile
-    dir.deleteOnExit()
+    val dir = createTempDir("tag-clean")
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -40,8 +39,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def tagDirty(): Prop = {
-    val dir = Files.createTempDirectory("dynver-test-tag-dirty-").toFile
-    dir.deleteOnExit()
+    val dir = createTempDir("tag-dirty")
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -63,8 +61,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def tagChangesClean(): Prop = {
-    val dir = Files.createTempDirectory("dynver-test-tag-changes-clean-").toFile
-    dir.deleteOnExit()
+    val dir = createTempDir("tag-changes-clean")
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -92,8 +89,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def tagChangesDirty(): Prop = {
-    val dir = Files.createTempDirectory("dynver-test-tag-changes-clean-").toFile
-    dir.deleteOnExit()
+    val dir = createTempDir("tag-changes-dirty")
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -123,8 +119,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def noTagsClean(): Prop = {
-    val dir = Files.createTempDirectory("dynver-test-tag-changes-clean-").toFile
-    dir.deleteOnExit()
+    val dir = createTempDir("no-tags-clean")
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -144,8 +139,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def noTagsDirty(): Prop = {
-    val dir = Files.createTempDirectory("dynver-test-tag-changes-clean-").toFile
-    dir.deleteOnExit()
+    val dir = createTempDir("no-tags-dirty")
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -167,13 +161,18 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def noCommits(): Prop = {
-    val dir = Files.createTempDirectory("dynver-test-tag-changes-clean-").toFile
-    dir.deleteOnExit()
+    val dir = createTempDir("no-commits")
 
     val git = Git.init().setDirectory(dir).call()
 
     val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
 
     dynver.version() ?= "HEAD+20160917"
+  }
+
+  def createTempDir(id: String): File = {
+    val dir = Files.createTempDirectory(s"dynver-test-$id-").toFile
+    dir.deleteOnExit()
+    dir
   }
 }
