@@ -11,8 +11,8 @@ import sbtdynver._
 object DynVerSpec extends Properties("DynVerSpec") {
   property("when on v1.0.0 tag, w/o local changes") = tagClean()
   property("when on v1.0.0 tag with local changes") = tagDirty()
-  property("when on commit 1234abcd: 3 commits after v1.0.0 tag, w/o local changes") = tagChangesClean()
-  property("when on commit 1234abcd: 3 commits after v1.0.0 tag with local changes") = tagChangesDirty()
+  property("when on commit 1234abcd: 1 commits after v1.0.0 tag, w/o local changes") = tagChangesClean()
+  property("when on commit 1234abcd: 1 commits after v1.0.0 tag with local changes") = tagChangesDirty()
   property("when there are no tags, on commit 1234abcd, w/o local changes") = noTagsClean()
   property("when there are no tags, on commit 1234abcd with local changes") = noTagsDirty()
   property("when there are no commits") = noCommits()
@@ -33,9 +33,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
-    val dynVer = DynVer(Some(dir), fakeClock)
-
-    dynVer.version() ?= "1.0.0"
+    version(dir) ?= "1.0.0"
   }
 
   def tagDirty(): Prop = {
@@ -55,9 +53,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("2").asJava, CREATE, APPEND)
 
-    val dynver = DynVer(Some(dir), fakeClock)
-
-    dynver.version() ?= "1.0.0+20160917"
+    version(dir) ?= "1.0.0+20160917"
   }
 
   def tagChangesClean(): Prop = {
@@ -83,9 +79,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    val dynver = DynVer(Some(dir), fakeClock)
-
-    dynver.version() ?= s"1.0.0+1-$sha"
+    version(dir) ?= s"1.0.0+1-$sha"
   }
 
   def tagChangesDirty(): Prop = {
@@ -113,9 +107,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("3").asJava, CREATE, APPEND)
 
-    val dynver = DynVer(Some(dir), fakeClock)
-
-    dynver.version() ?= s"1.0.0+1-$sha+20160917"
+    version(dir) ?= s"1.0.0+1-$sha+20160917"
   }
 
   def noTagsClean(): Prop = {
@@ -133,9 +125,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    val dynver = DynVer(Some(dir), fakeClock)
-
-    dynver.version() ?= sha
+    version(dir) ?= sha
   }
 
   def noTagsDirty(): Prop = {
@@ -155,27 +145,21 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("2").asJava, CREATE, APPEND)
 
-    val dynver = DynVer(Some(dir), fakeClock)
-
-    dynver.version() ?= s"$sha+20160917"
+    version(dir) ?= s"$sha+20160917"
   }
 
   def noCommits(): Prop = {
     val dir = createTempDir("no-commits")
 
-    val git = Git.init().setDirectory(dir).call()
+    Git.init().setDirectory(dir).call()
 
-    val dynver = DynVer(Some(dir), fakeClock)
-
-    dynver.version() ?= "HEAD+20160917"
+    version(dir) ?= "HEAD+20160917"
   }
 
   def noGitRepo(): Prop = {
     val dir = createTempDir("no-git-repo")
 
-    val dynver = DynVer(Some(dir), fakeClock)
-
-    dynver.version() ?= "HEAD+20160917"
+    version(dir) ?= "HEAD+20160917"
   }
 
   private def createTempDir(id: String): File = {
@@ -185,4 +169,6 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   private val fakeClock = FakeClock(new GregorianCalendar(2016, 9, 17).getTime)
+
+  private def version(dir: File): String = DynVer(Some(dir), fakeClock).version()
 }
