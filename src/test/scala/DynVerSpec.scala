@@ -19,7 +19,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   property("when not a git repo") = noGitRepo()
 
   def tagClean(): Prop = {
-    val dir = createTempDir("tag-clean")
+    val dir = createTempDir()
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -37,7 +37,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def tagDirty(): Prop = {
-    val dir = createTempDir("tag-dirty")
+    val dir = createTempDir()
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -57,7 +57,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def tagChangesClean(): Prop = {
-    val dir = createTempDir("tag-changes-clean")
+    val dir = createTempDir()
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -83,7 +83,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def tagChangesDirty(): Prop = {
-    val dir = createTempDir("tag-changes-dirty")
+    val dir = createTempDir()
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -111,7 +111,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def noTagsClean(): Prop = {
-    val dir = createTempDir("no-tags-clean")
+    val dir = createTempDir()
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -129,7 +129,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def noTagsDirty(): Prop = {
-    val dir = createTempDir("no-tags-dirty")
+    val dir = createTempDir()
 
     val git = Git.init().setDirectory(dir).call()
 
@@ -149,7 +149,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def noCommits(): Prop = {
-    val dir = createTempDir("no-commits")
+    val dir = createTempDir()
 
     Git.init().setDirectory(dir).call()
 
@@ -157,13 +157,13 @@ object DynVerSpec extends Properties("DynVerSpec") {
   }
 
   def noGitRepo(): Prop = {
-    val dir = createTempDir("no-git-repo")
+    val dir = createTempDir()
 
     version(dir) ?= "HEAD+20160917"
   }
 
-  private def createTempDir(id: String): File = {
-    val dir = Files.createTempDirectory(s"dynver-test-$id-").toFile
+  private def createTempDir() = {
+    val dir = Files.createTempDirectory(s"dynver-test-").toFile
     dir.deleteOnExit()
     dir
   }
