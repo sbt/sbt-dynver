@@ -33,7 +33,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     git.tag().setName("v1.0.0").setAnnotated(true).call()
 
-    val dynVer = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynVer = DynVer(Some(dir), fakeClock)
 
     dynVer.version() ?= "1.0.0"
   }
@@ -55,7 +55,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("2").asJava, CREATE, APPEND)
 
-    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynver = DynVer(Some(dir), fakeClock)
 
     dynver.version() ?= "1.0.0+20160917"
   }
@@ -83,7 +83,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynver = DynVer(Some(dir), fakeClock)
 
     dynver.version() ?= s"1.0.0+1-$sha"
   }
@@ -113,7 +113,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("3").asJava, CREATE, APPEND)
 
-    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynver = DynVer(Some(dir), fakeClock)
 
     dynver.version() ?= s"1.0.0+1-$sha+20160917"
   }
@@ -133,7 +133,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val sha = commit.abbreviate(8).name()
 
-    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynver = DynVer(Some(dir), fakeClock)
 
     dynver.version() ?= sha
   }
@@ -155,7 +155,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     Files.write(file, Seq("2").asJava, CREATE, APPEND)
 
-    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynver = DynVer(Some(dir), fakeClock)
 
     dynver.version() ?= s"$sha+20160917"
   }
@@ -165,7 +165,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     val git = Git.init().setDirectory(dir).call()
 
-    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynver = DynVer(Some(dir), fakeClock)
 
     dynver.version() ?= "HEAD+20160917"
   }
@@ -173,14 +173,16 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def noGitRepo(): Prop = {
     val dir = createTempDir("no-git-repo")
 
-    val dynver = DynVer(Some(dir), FakeClock(new GregorianCalendar(2016, 9, 17).getTime))
+    val dynver = DynVer(Some(dir), fakeClock)
 
     dynver.version() ?= "HEAD+20160917"
   }
 
-  def createTempDir(id: String): File = {
+  private def createTempDir(id: String): File = {
     val dir = Files.createTempDirectory(s"dynver-test-$id-").toFile
     dir.deleteOnExit()
     dir
   }
+
+  private val fakeClock = FakeClock(new GregorianCalendar(2016, 9, 17).getTime)
 }
