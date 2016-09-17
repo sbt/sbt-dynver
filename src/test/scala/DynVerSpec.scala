@@ -27,9 +27,7 @@ object DynVerSpec extends Properties("DynVerSpec") {
   def onTagAndCommitDirty() = onTagAndCommit().dirty()
 
   final case class State() {
-    val dir = Files.createTempDirectory(s"dynver-test-").toFile
-    dir.deleteOnExit()
-
+    val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
     val fakeClock = FakeClock(new GregorianCalendar(2016, 9, 17).getTime)
     val dynver = DynVer(Some(dir), fakeClock)
 
@@ -48,6 +46,8 @@ object DynVerSpec extends Properties("DynVerSpec") {
 
     def version() = dynver.version().replaceAllLiterally(sha, "1234abcd")
 
-    private def andThis[U](x: U): this.type = this
+    private def doalso[A, U](x: A)(xs: U*)  = x
+    private def doto[A, U](x: A)(f: A => U) = doalso(x)(f(x))
+    private def andThis[U](x: U)            = this
   }
 }
