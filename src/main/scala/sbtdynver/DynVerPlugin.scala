@@ -19,14 +19,7 @@ object DynverPlugin extends AutoPlugin {
 }
 
 final case class DynVer(wd: Option[File], clock: Clock) {
-  def version(): String = {
-    def overrideVersion = sys.props get "project.version"
-    def   dynverVersion = makeDynVer()
-    def    datedVersion = s"HEAD+$currentYearMonthDay"
-
-    Seq(overrideVersion, dynverVersion) reduce (_ orElse _) getOrElse datedVersion
-  }
-
+  def version(): String     = makeDynVer() getOrElse s"HEAD+$currentYearMonthDay"
   def isSnapshot(): Boolean = isDirty() || hasNoTags()
 
   def currentYearMonthDay(): String = "%1$tY%1$tm%1$td" format new Date
