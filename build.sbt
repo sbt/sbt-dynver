@@ -35,6 +35,12 @@ scriptedSettings
 scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 
+bintrayEnsureCredentials := {
+  sys.env.get("BINTRAY_API_KEY")
+    .map(apiKey => _root_.bintray.BintrayCredentials("dwijnand", apiKey))
+    .getOrElse(bintrayEnsureCredentials.value)
+}
+
 credentials in bintray ++= sys.env.get("BINTRAY_API_KEY")
   .map(apiKey => Credentials("Bintray API Realm", "api.bintray.com", "dwijnand", apiKey))
   .toList
