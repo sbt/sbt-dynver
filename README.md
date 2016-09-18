@@ -52,6 +52,10 @@ As `sbt-dynver` is an AutoPlugin that is all that is required.
 * `dynverCheckVersion`: Checks if version and dynver match
 * `dynverAssertVersion`: Asserts if version and dynver match
 
+## Dependencies
+
+* `git`, on the `PATH`
+
 ## Licence
 
 Copyright 2016 Dale Wijnand
