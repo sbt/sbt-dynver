@@ -2,7 +2,7 @@ val sbtdynver = project in file(".")
 
 organization := "com.dwijnand"
         name := "sbt-dynver"
-     version := "1.0.0-SNAPSHOT"
+     version := "1.0.0-M1"
     licenses := Seq(("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0")))
  description := "An sbt plugin to dynamically set your version from git"
   developers := List(Developer("dwijnand", "Dale Wijnand", "dale wijnand gmail com", url("https://dwijnand.com")))
