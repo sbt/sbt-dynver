@@ -32,10 +32,10 @@ object DynVerPlugin extends AutoPlugin {
 }
 
 final case class DynVer(wd: Option[File]) {
-  def version(d: Date): String = makeDynVer(d) getOrElse s"HEAD+${currentYearMonthDay(d)}"
+  def version(d: Date): String = makeDynVer(d) getOrElse s"HEAD+${timestamp(d)}"
   def isSnapshot(): Boolean    = isDirty() || hasNoTags()
 
-  def currentYearMonthDay(d: Date): String = "%1$tY%1$tm%1$td" format d
+  def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
 
   def makeDynVer(d: Date): Option[String] = {
     val tstamp = timestamp(d)

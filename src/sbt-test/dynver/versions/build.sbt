@@ -1,4 +1,4 @@
-def tstamp = Def.setting("%1$tY%1$tm%1$td" format dynverCurrentDate.value)
+def tstamp = Def.setting(sbtdynver.DynVer(None) timestamp dynverCurrentDate.value)
 def headSha = Def.task("git rev-parse --short=8 HEAD".!!(streams.value.log).init)
 
 def check(a: String, e: String) = assert(a == e, s"Version mismatch: Expected $e, Incoming $a")
