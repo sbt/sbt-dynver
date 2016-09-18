@@ -38,19 +38,29 @@ final case class DynVer(wd: Option[File]) {
   def currentYearMonthDay(d: Date): String = "%1$tY%1$tm%1$td" format d
 
   def makeDynVer(d: Date): Option[String] = {
-    Try(Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+${currentYearMonthDay(d)}""", wd).!!)
-      .toOption.map(_
-        .init
-        .replaceAll("^v", "")
-        .replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2")
-      )
+    val tstamp = timestamp(d)
+    Try(
+      Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+$tstamp""", wd).!!(NoProcessLogger)
+    ).toOption.map(_
+      .init
+      .replaceAll("^v", "")
+      .replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2")
+    )
   }
 
   def isDirty(): Boolean =
-    Try(Process("git status --untracked-files=no --porcelain", wd).!!).map(_.nonEmpty).getOrElse(true)
+    Try(Process("git status --untracked-files=no --porcelain", wd).!!(NoProcessLogger))
+      .map(_.nonEmpty)
+      .getOrElse(true)
 
   def hasNoTags(): Boolean =
-    Try(Process("git for-each-ref --format %(objecttype) refs/tags/", wd).!!)
+    Try(Process("git for-each-ref --format %(objecttype) refs/tags/", wd).!!(NoProcessLogger))
       .map(_.linesIterator.forall(_ startsWith "commit"))
       .getOrElse(true)
+}
+
+object NoProcessLogger extends ProcessLogger {
+  def info(s: =>String)  = ()
+  def error(s: =>String) = ()
+  def buffer[T](f: => T) = f
 }
