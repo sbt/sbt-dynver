@@ -2,8 +2,13 @@ language: scala
 jdk: oraclejdk8
 scala: 2.10.6
 
+env:
+  global:
+    - COURSIER_PROGRESS=0
+
 cache:
   directories:
+    - $HOME/.coursier
     - $HOME/.ivy2/cache
     - $HOME/.sbt
 
