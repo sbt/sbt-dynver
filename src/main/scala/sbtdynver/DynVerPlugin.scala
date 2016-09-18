@@ -11,7 +11,7 @@ object DynVerPlugin extends AutoPlugin {
   override def trigger  = allRequirements
 
   object autoImport {
-    val dynver              = taskKey[String]("The dynamically version, from git")
+    val dynver              = taskKey[String]("The version of your project, from git")
     val dynverCurrentDate   = settingKey[Date]("The current date, for dynver purposes")
     val dynverCheckVersion  = taskKey[Boolean]("Check if version and dynver match")
     val dynverAssertVersion = taskKey[Unit]("Assert if version and dynver match")
