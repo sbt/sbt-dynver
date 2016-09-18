@@ -35,7 +35,7 @@ scriptedSettings
 scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 
-credentials in ThisBuild ++= sys.env.get("BINTRAY_API_KEY")
+credentials in bintray ++= sys.env.get("BINTRAY_API_KEY")
   .map(apiKey => Credentials("Bintray API Realm", "api.bintray.com", "dwijnand", apiKey))
   .toList
 
