@@ -11,17 +11,23 @@ object DynVerPlugin extends AutoPlugin {
   override def trigger  = allRequirements
 
   object autoImport {
-    val dynverCurrentDate = settingKey[Date]("The current date, for dynver purposes")
+    val dynver              = taskKey[String]("The dynamically version, from git")
+    val dynverCurrentDate   = settingKey[Date]("The current date, for dynver purposes")
+    val dynverCheckVersion  = taskKey[Boolean]("Check if version and dynver match")
+    val dynverAssertVersion = taskKey[Unit]("Assert if version and dynver match")
   }
   import autoImport._
 
-  private val dynver = DynVer(None)
-
   override def buildSettings = Seq(
-       version := dynver.version(dynverCurrentDate.value),
-    isSnapshot := dynver.isSnapshot(),
+       version := DynVer(None).version(dynverCurrentDate.value),
+    isSnapshot := DynVer(None).isSnapshot(),
 
-    dynverCurrentDate := new Date
+    dynver              := DynVer(None).version(new Date),
+    dynverCurrentDate   := new Date,
+    dynverCheckVersion  := (dynver.value == version.value),
+    dynverAssertVersion := (if (!dynverCheckVersion.value)
+      sys.error(s"Version and dynver mismatch - version: ${version.value}, dynver: ${dynver.value}")
+    )
   )
 }
 
