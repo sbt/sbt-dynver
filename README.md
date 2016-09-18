@@ -18,7 +18,9 @@ Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/
 
 Find the latest release from the [Releases tab](https://github.com/dwijnand/sbt-dynver/releases) in GitHub.
 
-As `sbt-dynver` is an AutoPlugin that is all that is required.
+Then make sure to **NOT set the version setting**, otherwise you will override `sbt-dynver`.
+
+Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 
 ## Detail
 
