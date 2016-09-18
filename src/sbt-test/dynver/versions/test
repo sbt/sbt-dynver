@@ -1,12 +1,12 @@
 > checkNotAGitRepo
 
-$ exec git init
+> gitInit
 > reload
 > checkNoCommits
 
 > dirty
-$ exec git add .
-$ exec git commit -m1
+> gitAdd
+> gitCommit
 > reload
 > checkOnCommit
 
@@ -14,8 +14,8 @@ $ exec git commit -m1
 > reload
 > checkOnCommitDirty
 
-$ exec git commit -am2
-$ exec git tag -a v1.0.0 -m1.0.0
+> gitCommit
+> gitTag
 > reload
 > checkOnTag
 
@@ -23,7 +23,7 @@ $ exec git tag -a v1.0.0 -m1.0.0
 > reload
 > checkOnTagDirty
 
-$ exec git commit -am3
+> gitCommit
 > reload
 > checkOnTagAndCommit
 
