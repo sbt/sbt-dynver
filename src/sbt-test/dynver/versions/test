@@ -1,6 +1,6 @@
 > checkNotAGitRepo
 
-> gitInit
+> gitInitSetup
 > reload
 > checkNoCommits
 

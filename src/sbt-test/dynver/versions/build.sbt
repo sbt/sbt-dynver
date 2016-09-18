@@ -12,7 +12,12 @@ TaskKey[Unit]("checkOnTagDirty")          := check(version.value, s"1.0.0+${tsta
 TaskKey[Unit]("checkOnTagAndCommit")      := check(version.value, s"1.0.0+1-${headSha.value}")
 TaskKey[Unit]("checkOnTagAndCommitDirty") := check(version.value, s"1.0.0+1-${headSha.value}+${tstamp.value}")
 
-TaskKey[Unit]("gitInit")   := "git init".!!(streams.value.log)
+TaskKey[Unit]("gitInitSetup") := {
+  "git init".!!(streams.value.log)
+  "git config user.email dynver@mailinator.com".!!(streams.value.log)
+  "git config user.name dynver".!!(streams.value.log)
+}
+
 TaskKey[Unit]("gitAdd")    := "git add .".!!(streams.value.log)
 TaskKey[Unit]("gitCommit") := "git commit -am1".!!(streams.value.log)
 TaskKey[Unit]("gitTag")    := "git tag -a v1.0.0 -m1.0.0".!!(streams.value.log)
