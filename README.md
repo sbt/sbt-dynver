@@ -24,28 +24,18 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 
 ## Detail
 
-`version in ThisBuild` will be automatically set to:
+`version in ThisBuild` and `isSnapshot in ThisBuild` will be automatically set to:
 
 ```
-* 1.0.0                          (when on tag v1.0.0, w/o local changes)
-* 1.0.0+20140707-1030            (when on tag v1.0.0 with local changes)
-* 1.0.0+3-1234abcd               (when on tag v1.0.0 +3 commits, on commit 1234abcd, w/o local changes)
-* 1.0.0+3-1234abcd+20140707-1030 (when on tag v1.0.0 +3 commits, on commit 1234abcd with local changes)
-* 1234abcd                       (when there are no tags, on commit 1234abcd, w/o local changes)
-* 1234abcd+20140707-1030         (when there are no tags, on commit 1234abcd with local changes)
-* HEAD+20140707-1030             (when there are no commits, or the project isn't a git repo)
-```
-
-`isSnapshot in ThisBuild` will be automatically set to:
-
-```
-* false (when on tag v1.0.0, w/o local changes)
-* true  (when on tag v1.0.0 with local changes)
-* false (when on tag v1.0.0 +3 commits, on commit 1234abcd, w/o local changes)
-* true  (when on tag v1.0.0 +3 commits, on commit 1234abcd with local changes)
-* true  (when there are no tags, on commit 1234abcd, w/o local changes)
-* true  (when there are no tags, on commit 1234abcd with local changes)
-* true  (when there are no commits, or the project isn't a git repo)
+| Case                                                                 | version                        | isSnapshot |
+| -------------------------------------------------------------------- | ------------------------------ | ---------- |
+| when on tag v1.0.0, w/o local changes                                | 1.0.0                          | false      |
+| when on tag v1.0.0 with local changes                                | 1.0.0+20140707-1030            | true       |
+| when on tag v1.0.0 +3 commits, on commit 1234abcd, w/o local changes | 1.0.0+3-1234abcd               | false      |
+| when on tag v1.0.0 +3 commits, on commit 1234abcd with local changes | 1.0.0+3-1234abcd+20140707-1030 | true       |
+| when there are no tags, on commit 1234abcd, w/o local changes        | 1234abcd                       | true       |
+| when there are no tags, on commit 1234abcd with local changes        | 1234abcd+20140707-1030         | true       |
+| when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       |
 ```
 
 ## Tasks
