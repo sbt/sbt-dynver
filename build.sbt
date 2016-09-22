@@ -35,4 +35,10 @@ scriptedSettings
 scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 
+def toSbtPlugin(m: ModuleID) = Def.setting(
+  Defaults.sbtPluginExtra(m, (sbtBinaryVersion in update).value, (scalaBinaryVersion in update).value)
+)
+// .jar because of typesafehub/migration-manager#124
+mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.0.0").value.jar)
+
 cancelable in Global := true
