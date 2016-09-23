@@ -29,7 +29,6 @@ libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.13.2"      
              fork in Test := false
       logBuffered in Test := false
 parallelExecution in Test := true
-             test         := { (test in Test).value ; scripted.toTask("").value }
 
 scriptedSettings
 scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
@@ -40,5 +39,7 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
 )
 // .jar because of typesafehub/migration-manager#124
 mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.0.0").value.jar)
+
+TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
 
 cancelable in Global := true
