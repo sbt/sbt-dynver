@@ -13,4 +13,4 @@ else
   PUBLISH=publishLocal
 fi
 
-sbt ++$TRAVIS_SCALA_VERSION test "$PUBLISH"
+sbt ++$TRAVIS_SCALA_VERSION verify "$PUBLISH"
