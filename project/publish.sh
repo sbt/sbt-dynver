@@ -13,8 +13,8 @@ host = api.bintray.com
 user = dwijnand
 password = $BINTRAY_API_KEY
 EOF
+  # sbt ++$TRAVIS_SCALA_VERSION publish
+  echo "WAS ABOUT TO PUBLISH"
 else
-  PUBLISH=publishLocal
+  echo "Skipping publish"
 fi
-
-sbt ++$TRAVIS_SCALA_VERSION verify "$PUBLISH"
