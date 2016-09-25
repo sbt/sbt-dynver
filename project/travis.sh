@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
+if [[
+  "$TRAVIS_PULL_REQUEST" == "false" -a
+  "$TRAVIS_BRANCH" == "master" -a
+  "$TRAVIS_SECURE_ENV_VARS" == "true"
+]]; then
   PUBLISH=publish
   mkdir ~/.bintray
   cat > ~/.bintray/.credentials <<EOF
