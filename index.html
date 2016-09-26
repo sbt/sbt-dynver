@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>sbt-dynver by dwijnand</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-dark.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>sbt-dynver</h1>
+        <p>An sbt plugin to dynamically set your version from git</p>
+        <p class="view"><a href="https://github.com/dwijnand/sbt-dynver">View the Project on GitHub <small>dwijnand/sbt-dynver</small></a></p>
+        <ul>
+          <li><a href="https://github.com/dwijnand/sbt-dynver/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/dwijnand/sbt-dynver/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/dwijnand/sbt-dynver">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="sbt-dynver-" class="anchor" href="#sbt-dynver-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a><a href="https://github.com/dwijnand/sbt-dynver">sbt-dynver</a> <a href="https://travis-ci.org/dwijnand/sbt-dynver"><img src="https://travis-ci.org/dwijnand/sbt-dynver.svg?branch=master" alt="travis-badge"></a>
+</h1>
+
+<p><code>sbt-dynver</code> is an <a href="http://www.scala-sbt.org/">sbt</a> plugin to dynamically set your version from git.</p>
+
+<p>Inspired by:</p>
+
+<ul>
+<li>The way that Mercurial <a href="https://selenic.com/hg/file/3.9.1/setup.py#l179">versions itself</a>
+</li>
+<li>The <a href="https://github.com/sbt/sbt-git/blob/v0.8.5/src/main/scala/com/typesafe/sbt/SbtGit.scala#L266-L270">GitVersioning</a> AutoPlugin in <a href="https://github.com/sbt/sbt-git">sbt-git</a>.</li>
+</ul>
+
+<h2>
+<a id="setup" class="anchor" href="#setup" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Setup</h2>
+
+<p>Add this to your sbt build plugins, in either <code>project/plugins.sbt</code> or <code>project/dynver.sbt</code>:</p>
+
+<pre><code>addSbtPlugin("com.dwijnand" % "sbt-dynver" % &lt;latest-release&gt;)
+</code></pre>
+
+<p>Find the latest release from the <a href="https://github.com/dwijnand/sbt-dynver/releases">Releases tab</a> in GitHub.</p>
+
+<p>Then make sure to <strong>NOT set the version setting</strong>, otherwise you will override <code>sbt-dynver</code>.</p>
+
+<p>Other than that, as <code>sbt-dynver</code> is an AutoPlugin that is all that is required.</p>
+
+<h2>
+<a id="detail" class="anchor" href="#detail" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Detail</h2>
+
+<p><code>version in ThisBuild</code> and <code>isSnapshot in ThisBuild</code> will be automatically set to:</p>
+
+<pre><code>| Case                                                                 | version                        | isSnapshot |
+| -------------------------------------------------------------------- | ------------------------------ | ---------- |
+| when on tag v1.0.0, w/o local changes                                | 1.0.0                          | false      |
+| when on tag v1.0.0 with local changes                                | 1.0.0+20140707-1030            | true       |
+| when on tag v1.0.0 +3 commits, on commit 1234abcd, w/o local changes | 1.0.0+3-1234abcd               | false      |
+| when on tag v1.0.0 +3 commits, on commit 1234abcd with local changes | 1.0.0+3-1234abcd+20140707-1030 | true       |
+| when there are no tags, on commit 1234abcd, w/o local changes        | 1234abcd                       | true       |
+| when there are no tags, on commit 1234abcd with local changes        | 1234abcd+20140707-1030         | true       |
+| when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       |
+</code></pre>
+
+<h2>
+<a id="tasks" class="anchor" href="#tasks" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Tasks</h2>
+
+<ul>
+<li>
+<code>dynver</code>: Returns the version of your project, from git</li>
+<li>
+<code>dynverCheckVersion</code>: Checks if version and dynver match</li>
+<li>
+<code>dynverAssertVersion</code>: Asserts if version and dynver match</li>
+</ul>
+
+<h2>
+<a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Dependencies</h2>
+
+<ul>
+<li>
+<code>git</code>, on the <code>PATH</code>
+</li>
+</ul>
+
+<h2>
+<a id="licence" class="anchor" href="#licence" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Licence</h2>
+
+<p>Copyright 2016 Dale Wijnand</p>
+
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<p><a href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/dwijnand">dwijnand</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
