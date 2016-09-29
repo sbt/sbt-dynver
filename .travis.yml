@@ -3,6 +3,10 @@ jdk: oraclejdk8
 scala: 2.10.6
 script: project/travis.sh
 
+branches:
+  except:
+    - /^wip/.*$/
+
 env:
   global:
     - COURSIER_PROGRESS=0
