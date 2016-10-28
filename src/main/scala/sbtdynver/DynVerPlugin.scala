@@ -88,7 +88,7 @@ final case class DynVer(wd: Option[File]) {
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
   private[sbtdynver] def getGitDescribeOutput(d: Date) = {
-    val process = Process(s"""git describe --abbrev=8 --match v[0-9].* --always --dirty=+${timestamp(d)}""", wd)
+    val process = Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
     Try(process !! NoProcessLogger).toOption
       .map(_.init)
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
