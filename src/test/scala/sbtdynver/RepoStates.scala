@@ -8,14 +8,14 @@ import scala.collection.JavaConverters._
 import org.eclipse.jgit.api._
 
 object RepoStates {
-  def notAGitRepo()         = State()
-  def noCommits()           = notAGitRepo().init()
-  def onCommit()            = noCommits().commit()
-  def onCommitDirty()       = onCommit().dirty()
-  def onTag()               = onCommit().tag()
-  def onTagDirty()          = onTag().dirty()
-  def onTagAndCommit()      = onTag().commit()
-  def onTagAndCommitDirty() = onTagAndCommit().dirty()
+  def notAGitRepo()               = State()
+  def noCommits()                 = notAGitRepo().init()
+  def onCommit()                  = noCommits().commit()
+  def onCommitDirty()             = onCommit().dirty()
+  def onTag(n: String = "v1.0.0") = onCommit().tag(n)
+  def onTagDirty()                = onTag().dirty()
+  def onTagAndCommit()            = onTag().commit()
+  def onTagAndCommitDirty()       = onTagAndCommit().dirty()
 
   final case class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
@@ -25,9 +25,9 @@ object RepoStates {
     var git: Git = _
     var sha: String = "undefined"
 
-    def init()  = andThis(git = Git.init().setDirectory(dir).call())
-    def dirty() = andThis(Files.write(dir.toPath.resolve("f.txt"), Seq("1").asJava, CREATE, APPEND))
-    def tag()   = andThis(git.tag().setName("v1.0.0").setAnnotated(true).call())
+    def init()         = andThis(git = Git.init().setDirectory(dir).call())
+    def dirty()        = andThis(Files.write(dir.toPath.resolve("f.txt"), Seq("1").asJava, CREATE, APPEND))
+    def tag(n: String) = andThis(git.tag().setName(n).setAnnotated(true).call())
 
     def commit() = andThis {
       dirty()
