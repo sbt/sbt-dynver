@@ -27,7 +27,7 @@ object RepoStates {
 
     def init()         = andThis(git = Git.init().setDirectory(dir).call())
     def dirty()        = andThis(Files.write(dir.toPath.resolve("f.txt"), Seq("1").asJava, CREATE, APPEND))
-    def tag(n: String) = andThis(git.tag().setName(n).setAnnotated(true).call())
+    def tag(n: String) = andThis(git.tag().setName(n).call())
 
     def commit() = andThis {
       dirty()
