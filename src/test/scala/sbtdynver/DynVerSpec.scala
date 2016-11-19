@@ -1,3 +1,5 @@
+package sbtdynver
+
 import java.nio.file._, StandardOpenOption._
 import java.util.{ Properties => _, _ }
 
@@ -5,7 +7,7 @@ import scala.collection.JavaConverters._
 
 import org.scalacheck._, Prop._
 import org.eclipse.jgit.api._
-import sbtdynver._
+
 import RepoStates._
 
 object VersionSpec extends Properties("VersionSpec") {
