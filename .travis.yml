@@ -3,7 +3,7 @@ jdk: oraclejdk8
 scala: 2.10.6
 script: project/travis.sh
 
-# Build only PRs and pushes to master - http://stackoverflow.com/a/31882307/463761
+# Build only master and version tags - http://stackoverflow.com/a/31882307/463761
 branches:
   only:
     - master
