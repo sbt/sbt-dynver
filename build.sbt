@@ -37,8 +37,7 @@ scriptedBufferLog := true
 def toSbtPlugin(m: ModuleID) = Def.setting(
   Defaults.sbtPluginExtra(m, (sbtBinaryVersion in update).value, (scalaBinaryVersion in update).value)
 )
-// .jar because of typesafehub/migration-manager#124
-mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.0.0").value.jar)
+mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.1.0").value)
 
 TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
 
