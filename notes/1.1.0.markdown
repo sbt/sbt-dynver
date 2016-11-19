@@ -1,0 +1,19 @@
+### Improvements
+
+- Allows matching lightweight (aka non-annotated) tags (eg. `git tag` without the `-a`). [#14][]/[#15][] by [@2m][]
+- Reduced the number of `git` calls to 1. [#11][] by [@dwijnand][]
+- Adds MiMa to verify binary compatibility, included in PR validation. [#6][]/[#8][] by [@dwijnand][]
+
+### Bug Fixes
+
+- Fixes a bug where major-only version tags weren't matched (eg. "v2"). [#7][]/[#15][] by [@2m][]
+
+  [#6]: https://github.com/dwijnand/sbt-dynver/issues/6
+  [#7]: https://github.com/dwijnand/sbt-dynver/issues/7
+  [#8]: https://github.com/dwijnand/sbt-dynver/pull/8
+  [#11]: https://github.com/dwijnand/sbt-dynver/pull/11
+  [#14]: https://github.com/dwijnand/sbt-dynver/issues/14
+  [#15]: https://github.com/dwijnand/sbt-dynver/pull/15
+
+  [@dwijnand]: https://github.com/dwijnand
+  [@2m]: https://github.com/2m
