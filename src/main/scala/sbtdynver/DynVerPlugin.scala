@@ -59,7 +59,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   private val FromSha  = s"""^$Sha$TstampSuffix?$$""".r
   private val FromHead = s"""^HEAD$TstampSuffix$$""".r
 
-  private[sbtdynver] def parse(s: String): GitDescribeOutput = s match {
+  private[sbtdynver] def parse(s: String): GitDescribeOutput = s.trim match {
     case FromTag(tag, _, dist, sha, dirty) => parse0(   tag, dist, sha, dirty)
     case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty)
     case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty)
@@ -90,7 +90,6 @@ final case class DynVer(wd: Option[File]) {
   private[sbtdynver] def getGitDescribeOutput(d: Date) = {
     val process = Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
     Try(process !! NoProcessLogger).toOption
-      .map(_.init)
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
   }
