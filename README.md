@@ -41,6 +41,16 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 | when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       |
 ```
 
+## Tag Requirements
+
+In order to be recognized by sbt-dynver, tags must meet the following two requirements:
+1. Must be an annotated tag (as opposed to a lightweight tag)
+2. Must begin with the letter 'v'
+
+If you're not seeing what you expect, then start with this:
+
+    git tag -af v0.0.1 -m "Initial version tag for sbt-dynver"
+
 ## Tasks
 
 * `dynver`: Returns the version of your project, from git
