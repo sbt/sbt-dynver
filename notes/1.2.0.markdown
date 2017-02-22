@@ -1,0 +1,9 @@
+### Improvements
+
+- Implements APIs to allow custom version strings. See https://github.com/dwijnand/sbt-dynver#custom-version-string [#5][]/[#24][]/[#32][] by [@dwijnand][]
+
+  [#5]: https://github.com/dwijnand/sbt-dynver/issues/5
+  [#24]: https://github.com/dwijnand/sbt-dynver/issues/24
+  [#32]: https://github.com/dwijnand/sbt-dynver/pull/32
+
+  [@dwijnand]: https://github.com/dwijnand

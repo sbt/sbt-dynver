@@ -9,7 +9,6 @@ Inspired by:
 * The way that Mercurial [versions itself](https://selenic.com/hg/file/3.9.1/setup.py#l179)
 * The [GitVersioning][] AutoPlugin in [sbt-git][].
 
-[sbt]: http://www.scala-sbt.org/
 [sbt-git]: https://github.com/sbt/sbt-git
 [GitVersioning]: https://github.com/sbt/sbt-git/blob/v0.8.5/src/main/scala/com/typesafe/sbt/SbtGit.scala#L266-L270
 
@@ -52,8 +51,42 @@ If you're not seeing what you expect, then start with this:
 ## Tasks
 
 * `dynver`: Returns the version of your project, from git
+* `dynverCurrentDate`: Returns the captured current date. Used for both the dirty suffix of `dynverGitDescribeOutput` and for the fallback version (e.g if not a git repo).
+* `dynverGitDescribeOutput`: Returns the captured `git describe` out, in a structured form. Useful to define a [custom version string](#custom-version-string).
 * `dynverCheckVersion`: Checks if version and dynver match
 * `dynverAssertVersion`: Asserts if version and dynver match
+
+## Custom version string
+
+Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
+
+As an example, Docker rejects tags which include `+`'s ([#5](https://github.com/dwijnand/sbt-dynver/issues/5).
+
+A simply way to solve this is to simply post-process the value of `version in ThisBuild` (and optionally `dynver in ThisBuild`), for example by replacing '+' with '-':
+
+```scala
+version in ThisBuild ~= (_.replace('+', '-'))
+ dynver in ThisBuild ~= (_.replace('+', '-'))
+```
+
+If instead you want to completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
+
+```scala
+def versionFmt(out: sbtdynver.GitDescribeOutput): String =
+  out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + out.dirtySuffix.dropPlus.mkString("-", "")
+
+def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
+
+inThisBuild(List(
+  version := dynverGitDescribeOutput.value.mkVersion(versionFmt, fallbackVersion(dynverCurrentDate.value)),
+   dynver := {
+     val d = new java.util.Date
+     sbtdynver.DynVer.getGitDescribeOutput(d).mkVersion(versionFmt, fallbackVersion(d))
+   }
+))
+```
+
+Essentially this defines how to transform the structured output of `git describe`'s into a string, defines the fallback version string, and then wires everything back together.
 
 ## Dependencies
 

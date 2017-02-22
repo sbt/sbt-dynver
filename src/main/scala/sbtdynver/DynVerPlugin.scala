@@ -22,9 +22,9 @@ object DynVerPlugin extends AutoPlugin {
     isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
 
     dynverCurrentDate       := new Date,
-    dynverGitDescribeOutput := DynVer(None).getGitDescribeOutput(dynverCurrentDate.value),
+    dynverGitDescribeOutput := DynVer.getGitDescribeOutput(dynverCurrentDate.value),
 
-    dynver                  := DynVer(None).version(new Date),
+    dynver                  := DynVer.version(new Date),
     dynverCheckVersion      := (dynver.value == version.value),
     dynverAssertVersion     := (
       if (!dynverCheckVersion.value)
@@ -37,11 +37,29 @@ final case class GitRef(value: String)
 final case class GitCommitSuffix(distance: Int, sha: String)
 final case class GitDirtySuffix(value: String)
 
-final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
-  import commitSuffix.{ distance, sha }
-  private def comStr = if (distance <= 0 || sha.isEmpty) "" else s"+$distance-$sha"
+object GitRef extends (String => GitRef) {
+  final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
+    def dropV: GitRef = GitRef(value.replaceAll("^v", ""))
+    def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
+  }
+}
 
-  def version: String       = ref.value.replaceAll("^v", "") + comStr + dirtySuffix.value
+object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
+  final implicit class GitCommitSuffixOps(val x: GitCommitSuffix) extends AnyVal { import x._
+    def mkString(prefix: String, infix: String, suffix: String): String =
+      if (distance <= 0 || sha.isEmpty) "" else prefix + distance + infix + sha + suffix
+  }
+}
+
+object GitDirtySuffix extends (String => GitDirtySuffix) {
+  final implicit class GitDirtySuffixOps(val x: GitDirtySuffix) extends AnyVal { import x._
+    def dropPlus: GitDirtySuffix = GitDirtySuffix(value.replaceAll("^\\+", ""))
+    def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
+  }
+}
+
+final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
+  def version: String       = ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
   def isSnapshot(): Boolean = isDirty() || hasNoTags()
 
   def isDirty(): Boolean    = dirtySuffix.value.nonEmpty
@@ -70,8 +88,10 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     GitDescribeOutput(GitRef(ref), commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
   }
 
-  private[sbtdynver] implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
-    def version(d: Date): String = _x.fold(s"HEAD+${timestamp(d)}")(_.version)
+  implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
+    def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
+
+    def version(d: Date): String = mkVersion(_.version, DynVer fallback d)
     def isSnapshot: Boolean      = _x.fold(true)(x => x.isDirty() || x.hasNoTags())
 
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
@@ -79,7 +99,8 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   }
 }
 
-final case class DynVer(wd: Option[File]) {
+// sealed just so the companion object can extend it. Shouldn't've been a case class.
+sealed case class DynVer(wd: Option[File]) {
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
 
@@ -87,19 +108,19 @@ final case class DynVer(wd: Option[File]) {
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
-  private[sbtdynver] def getGitDescribeOutput(d: Date) = {
+  def getGitDescribeOutput(d: Date) = {
     val process = Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
     Try(process !! NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
   }
 
-  def timestamp(d: Date): String = sbtdynver timestamp d
+  def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
+  def fallback(d: Date): String = s"HEAD+${timestamp(d)}"
 }
+object DynVer extends DynVer(None) with (Option[File] => DynVer)
 
-object `package` {
-  private[sbtdynver] def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
-}
+object `package`
 
 object NoProcessLogger extends ProcessLogger {
   def info(s: => String)  = ()

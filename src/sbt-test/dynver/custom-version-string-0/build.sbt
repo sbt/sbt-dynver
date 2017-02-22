@@ -1,16 +1,19 @@
+version in ThisBuild ~= (_.replace('+', '-'))
+ dynver in ThisBuild ~= (_.replace('+', '-'))
+
 def tstamp = Def.setting(sbtdynver.DynVer timestamp dynverCurrentDate.value)
 def headSha = Def.task("git rev-parse --short=8 HEAD".!!(streams.value.log).trim)
 
 def check(a: String, e: String) = assert(a == e, s"Version mismatch: Expected $e, Incoming $a")
 
-TaskKey[Unit]("checkNotAGitRepo")         := check(version.value, s"HEAD+${tstamp.value}")
-TaskKey[Unit]("checkNoCommits")           := check(version.value, s"HEAD+${tstamp.value}")
+TaskKey[Unit]("checkNotAGitRepo")         := check(version.value, s"HEAD-${tstamp.value}")
+TaskKey[Unit]("checkNoCommits")           := check(version.value, s"HEAD-${tstamp.value}")
 TaskKey[Unit]("checkOnCommit")            := check(version.value, s"${headSha.value}")
-TaskKey[Unit]("checkOnCommitDirty")       := check(version.value, s"${headSha.value}+${tstamp.value}")
+TaskKey[Unit]("checkOnCommitDirty")       := check(version.value, s"${headSha.value}-${tstamp.value}")
 TaskKey[Unit]("checkOnTag")               := check(version.value, s"1.0.0")
-TaskKey[Unit]("checkOnTagDirty")          := check(version.value, s"1.0.0+${tstamp.value}")
-TaskKey[Unit]("checkOnTagAndCommit")      := check(version.value, s"1.0.0+1-${headSha.value}")
-TaskKey[Unit]("checkOnTagAndCommitDirty") := check(version.value, s"1.0.0+1-${headSha.value}+${tstamp.value}")
+TaskKey[Unit]("checkOnTagDirty")          := check(version.value, s"1.0.0-${tstamp.value}")
+TaskKey[Unit]("checkOnTagAndCommit")      := check(version.value, s"1.0.0-1-${headSha.value}")
+TaskKey[Unit]("checkOnTagAndCommitDirty") := check(version.value, s"1.0.0-1-${headSha.value}-${tstamp.value}")
 
 TaskKey[Unit]("gitInitSetup") := {
   "git init".!!(streams.value.log)
