@@ -22,9 +22,9 @@ object DynVerPlugin extends AutoPlugin {
     isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
 
     dynverCurrentDate       := new Date,
-    dynverGitDescribeOutput := DynVer(None).getGitDescribeOutput(dynverCurrentDate.value),
+    dynverGitDescribeOutput := DynVer.getGitDescribeOutput(dynverCurrentDate.value),
 
-    dynver                  := DynVer(None).version(new Date),
+    dynver                  := DynVer.version(new Date),
     dynverCheckVersion      := (dynver.value == version.value),
     dynverAssertVersion     := (
       if (!dynverCheckVersion.value)
@@ -79,7 +79,8 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   }
 }
 
-final case class DynVer(wd: Option[File]) {
+// sealed just so the companion object can extend it. Shouldn't've been a case class.
+sealed case class DynVer(wd: Option[File]) {
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
 
@@ -96,6 +97,7 @@ final case class DynVer(wd: Option[File]) {
 
   def timestamp(d: Date): String = sbtdynver timestamp d
 }
+object DynVer extends DynVer(None) with (Option[File] => DynVer)
 
 object `package` {
   private[sbtdynver] def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d

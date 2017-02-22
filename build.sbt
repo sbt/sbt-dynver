@@ -37,7 +37,11 @@ scriptedBufferLog := true
 def toSbtPlugin(m: ModuleID) = Def.setting(
   Defaults.sbtPluginExtra(m, (sbtBinaryVersion in update).value, (scalaBinaryVersion in update).value)
 )
+import com.typesafe.tools.mima.core._, ProblemFilters._
 mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.1.1").value)
+mimaBinaryIssueFilters ++= Seq(
+  exclude[MissingTypesProblem]("sbtdynver.DynVer$") // dropped synthetic abstract function parent
+)
 
 TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
 
