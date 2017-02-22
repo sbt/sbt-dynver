@@ -9,7 +9,6 @@ Inspired by:
 * The way that Mercurial [versions itself](https://selenic.com/hg/file/3.9.1/setup.py#l179)
 * The [GitVersioning][] AutoPlugin in [sbt-git][].
 
-[sbt]: http://www.scala-sbt.org/
 [sbt-git]: https://github.com/sbt/sbt-git
 [GitVersioning]: https://github.com/sbt/sbt-git/blob/v0.8.5/src/main/scala/com/typesafe/sbt/SbtGit.scala#L266-L270
 
