@@ -40,7 +40,8 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
 import com.typesafe.tools.mima.core._, ProblemFilters._
 mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.1.1").value)
 mimaBinaryIssueFilters ++= Seq(
-  exclude[MissingTypesProblem]("sbtdynver.DynVer$") // dropped synthetic abstract function parent
+  exclude[MissingTypesProblem]("sbtdynver.DynVer$"),          // dropped synthetic abstract function parent
+  exclude[DirectMissingMethodProblem]("sbtdynver.package.timestamp") // dropped package private method
 )
 
 TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value

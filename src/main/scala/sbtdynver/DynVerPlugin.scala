@@ -70,8 +70,10 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     GitDescribeOutput(GitRef(ref), commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
   }
 
-  private[sbtdynver] implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
-    def version(d: Date): String = _x.fold(s"HEAD+${timestamp(d)}")(_.version)
+  implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
+    def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
+
+    def version(d: Date): String = mkVersion(_.version, DynVer fallback d)
     def isSnapshot: Boolean      = _x.fold(true)(x => x.isDirty() || x.hasNoTags())
 
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
@@ -88,20 +90,19 @@ sealed case class DynVer(wd: Option[File]) {
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
-  private[sbtdynver] def getGitDescribeOutput(d: Date) = {
+  def getGitDescribeOutput(d: Date) = {
     val process = Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
     Try(process !! NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
   }
 
-  def timestamp(d: Date): String = sbtdynver timestamp d
+  def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
+  def fallback(d: Date): String = s"HEAD+${timestamp(d)}"
 }
 object DynVer extends DynVer(None) with (Option[File] => DynVer)
 
-object `package` {
-  private[sbtdynver] def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
-}
+object `package`
 
 object NoProcessLogger extends ProcessLogger {
   def info(s: => String)  = ()
