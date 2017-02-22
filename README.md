@@ -51,8 +51,33 @@ If you're not seeing what you expect, then start with this:
 ## Tasks
 
 * `dynver`: Returns the version of your project, from git
+* `dynverCurrentDate`: Returns the captured current date. Used for both the dirty suffix of `dynverGitDescribeOutput` and for the fallback version (e.g if not a git repo).
+* `dynverGitDescribeOutput`: Returns the captured `git describe` out, in a structured form. Useful to define a [custom version string](#custom-version-string).
 * `dynverCheckVersion`: Checks if version and dynver match
 * `dynverAssertVersion`: Asserts if version and dynver match
+
+## Custom version string
+
+To define a custom version string you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer` object to redefine `version in ThisBuild` (and optionally also `dynver in ThisBuild`).
+
+For example if you want a custom version string that doesn't use `+`'s (because Docker rejects them - [#5](https://github.com/dwijnand/sbt-dynver/issues/5)) you can customise like so:
+
+```scala
+def versionFmt(out: sbtdynver.GitDescribeOutput): String =
+  out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + out.dirtySuffix.dropPlus.mkString("-", "")
+
+def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
+
+inThisBuild(List(
+  version := dynverGitDescribeOutput.value.mkVersion(versionFmt, fallbackVersion(dynverCurrentDate.value)),
+   dynver := {
+     val d = new java.util.Date
+     sbtdynver.DynVer.getGitDescribeOutput(d).mkVersion(versionFmt, fallbackVersion(d))
+   }
+))
+```
+
+Essentially this defines how to transform `git describe`'s output into a string, what the fallback version string is, and then wires everything back together.
 
 ## Dependencies
 

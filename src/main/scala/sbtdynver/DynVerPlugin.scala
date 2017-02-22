@@ -37,11 +37,29 @@ final case class GitRef(value: String)
 final case class GitCommitSuffix(distance: Int, sha: String)
 final case class GitDirtySuffix(value: String)
 
-final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
-  import commitSuffix.{ distance, sha }
-  private def comStr = if (distance <= 0 || sha.isEmpty) "" else s"+$distance-$sha"
+object GitRef extends (String => GitRef) {
+  final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
+    def dropV: GitRef = GitRef(value.replaceAll("^v", ""))
+    def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
+  }
+}
 
-  def version: String       = ref.value.replaceAll("^v", "") + comStr + dirtySuffix.value
+object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
+  final implicit class GitCommitSuffixOps(val x: GitCommitSuffix) extends AnyVal { import x._
+    def mkString(prefix: String, infix: String, suffix: String): String =
+      if (distance <= 0 || sha.isEmpty) "" else prefix + distance + infix + sha + suffix
+  }
+}
+
+object GitDirtySuffix extends (String => GitDirtySuffix) {
+  final implicit class GitDirtySuffixOps(val x: GitDirtySuffix) extends AnyVal { import x._
+    def dropPlus: GitDirtySuffix = GitDirtySuffix(value.replaceAll("^\\+", ""))
+    def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
+  }
+}
+
+final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
+  def version: String       = ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
   def isSnapshot(): Boolean = isDirty() || hasNoTags()
 
   def isDirty(): Boolean    = dirtySuffix.value.nonEmpty

@@ -41,6 +41,9 @@ import com.typesafe.tools.mima.core._, ProblemFilters._
 mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.1.1").value)
 mimaBinaryIssueFilters ++= Seq(
   exclude[MissingTypesProblem]("sbtdynver.DynVer$"),          // dropped synthetic abstract function parent
+  exclude[MissingTypesProblem]("sbtdynver.GitRef$"),          // dropped synthetic abstract function parent
+  exclude[MissingTypesProblem]("sbtdynver.GitCommitSuffix$"), // dropped synthetic abstract function parent
+  exclude[MissingTypesProblem]("sbtdynver.GitDirtySuffix$"),  // dropped synthetic abstract function parent
   exclude[DirectMissingMethodProblem]("sbtdynver.package.timestamp") // dropped package private method
 )
 
