@@ -1,0 +1,32 @@
+> checkNotAGitRepo
+
+> gitInitSetup
+> reload
+> checkNoCommits
+
+> dirty
+> gitAdd
+> gitCommit
+> reload
+> checkOnCommit
+
+> dirty
+> reload
+> checkOnCommitDirty
+
+> gitCommit
+> gitTag
+> reload
+> checkOnTag
+
+> dirty
+> reload
+> checkOnTagDirty
+
+> gitCommit
+> reload
+> checkOnTagAndCommit
+
+> dirty
+> reload
+> checkOnTagAndCommitDirty

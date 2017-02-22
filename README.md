@@ -58,9 +58,18 @@ If you're not seeing what you expect, then start with this:
 
 ## Custom version string
 
-To define a custom version string you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer` object to redefine `version in ThisBuild` (and optionally also `dynver in ThisBuild`).
+Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
 
-For example if you want a custom version string that doesn't use `+`'s (because Docker rejects them - [#5](https://github.com/dwijnand/sbt-dynver/issues/5)) you can customise like so:
+As an example, Docker rejects tags which include `+`'s ([#5](https://github.com/dwijnand/sbt-dynver/issues/5).
+
+A simply way to solve this is to simply post-process the value of `version in ThisBuild` (and optionally `dynver in ThisBuild`), for example by replacing '+' with '-':
+
+```scala
+version in ThisBuild ~= (_.replace('+', '-'))
+ dynver in ThisBuild ~= (_.replace('+', '-'))
+```
+
+If instead you want to completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
 
 ```scala
 def versionFmt(out: sbtdynver.GitDescribeOutput): String =
@@ -77,7 +86,7 @@ inThisBuild(List(
 ))
 ```
 
-Essentially this defines how to transform `git describe`'s output into a string, what the fallback version string is, and then wires everything back together.
+Essentially this defines how to transform the structured output of `git describe`'s into a string, defines the fallback version string, and then wires everything back together.
 
 ## Dependencies
 
