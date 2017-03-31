@@ -50,8 +50,8 @@ If you're not seeing what you expect, then start with this:
 
 ## Tasks
 
-* `dynver`: Returns the version of your project, from git
-* `dynverCurrentDate`: Returns the captured current date. Used for both the dirty suffix of `dynverGitDescribeOutput` and for the fallback version (e.g if not a git repo).
+* `dynver`: Returns the dynamic version of your project, inferred from the git metadata
+* `dynverCurrentDate`: Returns the captured current date. Used for (a) the dirty suffix of `dynverGitDescribeOutput` and (b) the fallback version (e.g if not a git repo).
 * `dynverGitDescribeOutput`: Returns the captured `git describe` out, in a structured form. Useful to define a [custom version string](#custom-version-string).
 * `dynverCheckVersion`: Checks if version and dynver match
 * `dynverAssertVersion`: Asserts if version and dynver match
@@ -60,7 +60,7 @@ If you're not seeing what you expect, then start with this:
 
 Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
 
-As an example, Docker rejects tags which include `+`'s ([#5](https://github.com/dwijnand/sbt-dynver/issues/5).
+As an example, Docker rejects tags which include `+`'s ([#5](https://github.com/dwijnand/sbt-dynver/issues/5)).
 
 A simply way to solve this is to simply post-process the value of `version in ThisBuild` (and optionally `dynver in ThisBuild`), for example by replacing '+' with '-':
 
@@ -86,7 +86,11 @@ inThisBuild(List(
 ))
 ```
 
-Essentially this defines how to transform the structured output of `git describe`'s into a string, defines the fallback version string, and then wires everything back together.
+Essentially this:
+
+1. defines how to transform the structured output of `git describe`'s into a string, with `versionFmt`
+2. defines the fallback version string, with `fallbackVersion`, and
+3. wires everything back together
 
 ## Dependencies
 
@@ -94,7 +98,7 @@ Essentially this defines how to transform the structured output of `git describe
 
 ## Licence
 
-Copyright 2016 Dale Wijnand
+Copyright 2016-2017 Dale Wijnand
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
