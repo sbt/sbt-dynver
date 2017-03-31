@@ -20,6 +20,8 @@ Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/
 
 Then make sure to **NOT set the version setting**, otherwise you will override `sbt-dynver`.
 
+In CI, you may need to run `git fetch --tags` if the repo is cloned with `--no-tags`.
+
 Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 
 ## Detail
