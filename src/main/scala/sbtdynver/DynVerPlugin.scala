@@ -39,6 +39,7 @@ final case class GitDirtySuffix(value: String)
 
 object GitRef extends (String => GitRef) {
   final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
+    def isTag: Boolean = value startsWith "v"
     def dropV: GitRef = GitRef(value.replaceAll("^v", ""))
     def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
   }
@@ -46,8 +47,9 @@ object GitRef extends (String => GitRef) {
 
 object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
   final implicit class GitCommitSuffixOps(val x: GitCommitSuffix) extends AnyVal { import x._
+    def isEmpty: Boolean = distance <= 0 || sha.isEmpty
     def mkString(prefix: String, infix: String, suffix: String): String =
-      if (distance <= 0 || sha.isEmpty) "" else prefix + distance + infix + sha + suffix
+      if (isEmpty) "" else prefix + distance + infix + sha + suffix
   }
 }
 
@@ -63,7 +65,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
   def isSnapshot(): Boolean = isDirty() || hasNoTags()
 
   def isDirty(): Boolean    = dirtySuffix.value.nonEmpty
-  def hasNoTags(): Boolean  = !(ref.value startsWith "v")
+  def hasNoTags(): Boolean  = !ref.isTag
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
