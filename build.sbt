@@ -10,7 +10,7 @@ organization := "com.dwijnand"
      scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git"))
 
    sbtPlugin := true
-scalaVersion := "2.10.6"
+scalaVersion := (sbtVersionSeries.value match { case Sbt013 => "2.10.6"; case Sbt1 => "2.12.2" })
 
        maxErrors := 15
 triggeredMessage := Watched.clearWhenTriggered
@@ -24,7 +24,7 @@ scalacOptions  += "-Ywarn-numeric-widen"
 scalacOptions  += "-Ywarn-value-discard"
 
 libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "4.4.1.201607150455-r" % Test
-libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.13.2"               % Test
+libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.13.5"               % Test
 
              fork in Test := false
       logBuffered in Test := false
@@ -38,13 +38,18 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
   Defaults.sbtPluginExtra(m, (sbtBinaryVersion in update).value, (scalaBinaryVersion in update).value)
 )
 import com.typesafe.tools.mima.core._, ProblemFilters._
-mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.2.0").value)
+mimaPreviousArtifacts := (sbtVersionSeries.value match {
+  case Sbt013 => Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.2.0").value)
+  case Sbt1   => Set.empty
+})
 mimaBinaryIssueFilters ++= Seq(
   exclude[MissingTypesProblem]("sbtdynver.DynVer$"),          // dropped synthetic abstract function parent
   exclude[MissingTypesProblem]("sbtdynver.GitRef$"),          // dropped synthetic abstract function parent
   exclude[MissingTypesProblem]("sbtdynver.GitCommitSuffix$"), // dropped synthetic abstract function parent
   exclude[MissingTypesProblem]("sbtdynver.GitDirtySuffix$"),  // dropped synthetic abstract function parent
-  exclude[DirectMissingMethodProblem]("sbtdynver.package.timestamp") // dropped package private method
+  exclude[DirectMissingMethodProblem]("sbtdynver.package.timestamp"), // dropped package private method
+  exclude[MissingClassProblem]("sbtdynver.NoProcessLogger$"), // sbt1 killed sbt.ProcessLogger so moved to impl
+  exclude[MissingClassProblem]("sbtdynver.NoProcessLogger")   // sbt1 killed sbt.ProcessLogger so moved to impl
 )
 
 TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value

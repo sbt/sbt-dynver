@@ -111,8 +111,8 @@ sealed case class DynVer(wd: Option[File]) {
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
   def getGitDescribeOutput(d: Date) = {
-    val process = Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
-    Try(process !! NoProcessLogger).toOption
+    val process = scala.sys.process.Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
+    Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
   }
@@ -124,8 +124,12 @@ object DynVer extends DynVer(None) with (Option[File] => DynVer)
 
 object `package`
 
-object NoProcessLogger extends ProcessLogger {
-  def info(s: => String)  = ()
-  def error(s: => String) = ()
-  def buffer[T](f: => T)  = f
+package impl {
+  object NoProcessLogger extends scala.sys.process.ProcessLogger {
+    def info(s: => String)  = ()
+    def out(s: => String)   = ()
+    def error(s: => String) = ()
+    def err(s: => String)   = ()
+    def buffer[T](f: => T)  = f
+  }
 }

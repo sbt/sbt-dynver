@@ -1,6 +1,7 @@
 ### Improvements
 
-- Introduce `GitRef.isTag` & `GitCommitSuffix.isEmpty` utilities. [#34][] by [@dwijnand][]
+- Introduces `GitRef.isTag` & `GitCommitSuffix.isEmpty` utilities. [#34][] by [@dwijnand][]
+- Cross builds against sbt 1.0.0-M5
 
 [#34]: https://github.com/dwijnand/sbt-dynver/pull/34
 [@dwijnand]: https://github.com/dwijnand

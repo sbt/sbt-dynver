@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if [[ "$TRAVIS_SBT_VERSION" == "0.13.x" ]]; then
+  SWITCH_SBT_VERSION=""
+else
+  SWITCH_SBT_VERSION="^^$TRAVIS_SBT_VERSION"
+fi
+
 [[ "$TRAVIS_PULL_REQUEST" == "false"
 && "$TRAVIS_BRANCH" == "master"
 && "$TRAVIS_SECURE_ENV_VARS" == "true"
@@ -24,4 +30,4 @@ else
   PUBLISH=publishLocal
 fi
 
-sbt ++$TRAVIS_SCALA_VERSION verify "$PUBLISH"
+sbt "$SWITCH_SBT_VERSION" verify "$PUBLISH"
