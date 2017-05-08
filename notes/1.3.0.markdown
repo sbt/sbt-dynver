@@ -1,0 +1,6 @@
+### Improvements
+
+- Introduce `GitRef.isTag` & `GitCommitSuffix.isEmpty` utilities. [#34][] by [@dwijnand][]
+
+[#34]: https://github.com/dwijnand/sbt-dynver/pull/34
+[@dwijnand]: https://github.com/dwijnand
