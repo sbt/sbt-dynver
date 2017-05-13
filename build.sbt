@@ -39,18 +39,10 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
 )
 import com.typesafe.tools.mima.core._, ProblemFilters._
 mimaPreviousArtifacts := (sbtVersionSeries.value match {
-  case Sbt013 => Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.2.0").value)
-  case Sbt1   => Set.empty
+  case Sbt013 => Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.3.0").value)
+  case Sbt1   => Set.empty // TODO: There is a sbt 1.0.0-M5 release of sbt-dynver, y u no work
 })
-mimaBinaryIssueFilters ++= Seq(
-  exclude[MissingTypesProblem]("sbtdynver.DynVer$"),          // dropped synthetic abstract function parent
-  exclude[MissingTypesProblem]("sbtdynver.GitRef$"),          // dropped synthetic abstract function parent
-  exclude[MissingTypesProblem]("sbtdynver.GitCommitSuffix$"), // dropped synthetic abstract function parent
-  exclude[MissingTypesProblem]("sbtdynver.GitDirtySuffix$"),  // dropped synthetic abstract function parent
-  exclude[DirectMissingMethodProblem]("sbtdynver.package.timestamp"), // dropped package private method
-  exclude[MissingClassProblem]("sbtdynver.NoProcessLogger$"), // sbt1 killed sbt.ProcessLogger so moved to impl
-  exclude[MissingClassProblem]("sbtdynver.NoProcessLogger")   // sbt1 killed sbt.ProcessLogger so moved to impl
-)
+mimaBinaryIssueFilters ++= Seq()
 
 TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
 
