@@ -1,3 +1,5 @@
+import scala.sys.process.stringToProcess
+
 def versionFmt(out: sbtdynver.GitDescribeOutput): String =
   out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + out.dirtySuffix.dropPlus.mkString("-", "")
 
@@ -12,7 +14,10 @@ inThisBuild(List(
 ))
 
 def tstamp = Def.setting(sbtdynver.DynVer timestamp dynverCurrentDate.value)
-def headSha = Def.task("git rev-parse --short=8 HEAD".!!(streams.value.log).trim)
+def headSha = {
+  implicit def log2log(log: Logger): scala.sys.process.ProcessLogger = sbtLoggerToScalaSysProcessLogger(log)
+  Def.task("git rev-parse --short=8 HEAD".!!(streams.value.log).trim)
+}
 
 def check(a: String, e: String) = assert(a == e, s"Version mismatch: Expected $e, Incoming $a")
 
@@ -26,17 +31,34 @@ TaskKey[Unit]("checkOnTagAndCommit")      := check(version.value, s"1.0.0-1-${he
 TaskKey[Unit]("checkOnTagAndCommitDirty") := check(version.value, s"1.0.0-1-${headSha.value}-${tstamp.value}")
 
 TaskKey[Unit]("gitInitSetup") := {
+  implicit def log2log(log: Logger): scala.sys.process.ProcessLogger = sbtLoggerToScalaSysProcessLogger(log)
   "git init".!!(streams.value.log)
   "git config user.email dynver@mailinator.com".!!(streams.value.log)
   "git config user.name dynver".!!(streams.value.log)
 }
 
-TaskKey[Unit]("gitAdd")    := "git add .".!!(streams.value.log)
-TaskKey[Unit]("gitCommit") := "git commit -am1".!!(streams.value.log)
-TaskKey[Unit]("gitTag")    := "git tag -a v1.0.0 -m1.0.0".!!(streams.value.log)
+TaskKey[Unit]("gitAdd")    := {
+  implicit def log2log(log: Logger): scala.sys.process.ProcessLogger = sbtLoggerToScalaSysProcessLogger(log)
+  "git add .".!!(streams.value.log)
+}
+TaskKey[Unit]("gitCommit") := {
+  implicit def log2log(log: Logger): scala.sys.process.ProcessLogger = sbtLoggerToScalaSysProcessLogger(log)
+  "git commit -am1".!!(streams.value.log)
+}
+TaskKey[Unit]("gitTag")    := {
+  implicit def log2log(log: Logger): scala.sys.process.ProcessLogger = sbtLoggerToScalaSysProcessLogger(log)
+  "git tag -a v1.0.0 -m1.0.0".!!(streams.value.log)
+}
 
 TaskKey[Unit]("dirty") := {
   import java.nio.file._, StandardOpenOption._
   import scala.collection.JavaConverters._
   Files.write(baseDirectory.value.toPath.resolve("f.txt"), Seq("1").asJava, CREATE, APPEND)
 }
+
+def sbtLoggerToScalaSysProcessLogger(log: Logger): scala.sys.process.ProcessLogger =
+  new scala.sys.process.ProcessLogger {
+    def buffer[T](f: => T): T   = f
+    def err(s: => String): Unit = log info s
+    def out(s: => String): Unit = log error s
+  }
