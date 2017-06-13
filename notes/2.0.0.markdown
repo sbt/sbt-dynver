@@ -1,0 +1,11 @@
+### Changes
+
+- Consider untagged but 'clean' repositories as 'snapshots'.
+
+Previously, because dynver generates a unique, stable version for each commit from a 
+non-dirty repository, it set `isSnapshot` to `false` for all of these. This made sense
+since these versions are stable, immutable identifiers that can be relied upon for example
+for caching, but did not correspond to the intuition of a 'snapshot' as an intermediate,
+non-released version. From version 2.0.0 onwards, `isSnapshot` will only be false for tagged
+releases, and the key `isVersionStable` can be used to determine whether the current version
+is a stable identifier.

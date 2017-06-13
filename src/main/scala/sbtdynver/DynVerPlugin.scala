@@ -14,12 +14,16 @@ object DynVerPlugin extends AutoPlugin {
     val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
     val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
+
+    // Would be nice if this were an 'upstream' key
+    val isVersionStable         = taskKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
   }
   import autoImport._
 
   override def buildSettings = Seq(
-       version := dynverGitDescribeOutput.value.version(dynverCurrentDate.value),
-    isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
+            version := dynverGitDescribeOutput.value.version(dynverCurrentDate.value),
+         isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
+    isVersionStable := dynverGitDescribeOutput.value.isVersionStable,
 
     dynverCurrentDate       := new Date,
     dynverGitDescribeOutput := DynVer.getGitDescribeOutput(dynverCurrentDate.value),
@@ -61,11 +65,12 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 }
 
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
-  def version: String       = ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
-  def isSnapshot(): Boolean = isDirty() || hasNoTags()
+  def version: String            = ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
+  def isSnapshot(): Boolean      = isDirty() || hasNoTags() || commitSuffix.distance > 0
+  def isVersionStable(): Boolean = !isDirty()
 
-  def isDirty(): Boolean    = dirtySuffix.value.nonEmpty
-  def hasNoTags(): Boolean  = !ref.isTag
+  def isDirty(): Boolean         = dirtySuffix.value.nonEmpty
+  def hasNoTags(): Boolean       = !ref.isTag
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
@@ -94,7 +99,8 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
     def version(d: Date): String = mkVersion(_.version, DynVer fallback d)
-    def isSnapshot: Boolean      = _x.fold(true)(x => x.isDirty() || x.hasNoTags())
+    def isSnapshot: Boolean      = _x.map(_.isSnapshot).getOrElse(true)
+    def isVersionStable: Boolean = _x.map(_.isVersionStable).getOrElse(false)
 
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
     def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
@@ -105,6 +111,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 sealed case class DynVer(wd: Option[File]) {
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
+  def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
 
   def makeDynVer(d: Date): Option[String] = getGitDescribeOutput(d) map (_.version)
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
