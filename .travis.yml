@@ -6,6 +6,7 @@ script: project/travis.sh
 branches:
   only:
     - master
+    - 2.x
     - /^v[0-9]/
 
 env:
