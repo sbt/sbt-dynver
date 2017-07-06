@@ -22,6 +22,17 @@ object IsSnapshotSpec extends Properties("IsSnapshotSpec") {
   property("on commit with local changes")                  = onCommitDirty().isSnapshot()       ?= true
   property("on tag v1.0.0, w/o local changes")              = onTag().isSnapshot()               ?= false
   property("on tag v1.0.0 with local changes")              = onTagDirty().isSnapshot()          ?= true
-  property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().isSnapshot()      ?= false
+  property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().isSnapshot()      ?= true
   property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().isSnapshot() ?= true
+}
+
+object isVersionStableSpec extends Properties("IsVersionStableSpec") {
+  property("not a git repo")                                = notAGitRepo().isVersionStable()         ?= false
+  property("no commits")                                    = noCommits().isVersionStable()           ?= false
+  property("on commit, w/o local changes")                  = onCommit().isVersionStable()            ?= true
+  property("on commit with local changes")                  = onCommitDirty().isVersionStable()       ?= false
+  property("on tag v1.0.0, w/o local changes")              = onTag().isVersionStable()               ?= true
+  property("on tag v1.0.0 with local changes")              = onTagDirty().isVersionStable()          ?= false
+  property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().isVersionStable()      ?= true
+  property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().isVersionStable() ?= false
 }

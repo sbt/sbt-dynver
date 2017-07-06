@@ -35,8 +35,9 @@ object RepoStates {
       sha = git.commit().setMessage("1").call().abbreviate(8).name()
     }
 
-    def version()    = dynver.version(date).replaceAllLiterally(sha, "1234abcd")
-    def isSnapshot() = dynver.isSnapshot()
+    def version()         = dynver.version(date).replaceAllLiterally(sha, "1234abcd")
+    def isSnapshot()      = dynver.isSnapshot()
+    def isVersionStable() = dynver.isVersionStable()
 
     private def doalso[A, U](x: A)(xs: U*)  = x
     private def doto[A, U](x: A)(f: A => U) = doalso(x)(f(x))
