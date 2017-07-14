@@ -41,6 +41,7 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 | when there are no tags, on commit 1234abcd, w/o local changes        | 1234abcd                       | true       | true            |
 | when there are no tags, on commit 1234abcd with local changes        | 1234abcd+20140707-1030         | true       | false           |
 | when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       | false           |
+| when sbt is started -Dsbt-dynver=x.y.z                               | x.y.z                          |            |                 |
 ```
 
 ## Tag Requirements

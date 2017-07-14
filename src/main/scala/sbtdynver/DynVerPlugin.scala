@@ -98,7 +98,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
-    def version(d: Date): String = mkVersion(_.version, DynVer fallback d)
+    def version(d: Date): String = sys.props.getOrElse("sbt-dynver.version", mkVersion(_.version, DynVer fallback d))
     def isSnapshot: Boolean      = _x.map(_.isSnapshot).getOrElse(true)
     def isVersionStable: Boolean = _x.map(_.isVersionStable).getOrElse(false)
 
