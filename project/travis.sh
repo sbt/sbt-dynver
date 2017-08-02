@@ -2,8 +2,10 @@
 
 if [[ "$TRAVIS_SBT_VERSION" == "0.13.x" ]]; then
   SWITCH_SBT_VERSION=""
+  SCRIPTED="scripted"
 else
   SWITCH_SBT_VERSION="^^$TRAVIS_SBT_VERSION"
+  SCRIPTED=""
 fi
 
 [[ "$TRAVIS_PULL_REQUEST" == "false"
@@ -30,4 +32,4 @@ else
   PUBLISH=publishLocal
 fi
 
-sbt "$SWITCH_SBT_VERSION" verify "$PUBLISH"
+sbt "$SWITCH_SBT_VERSION" test "$SCRIPTED" mimaReportBinaryIssues "$PUBLISH"

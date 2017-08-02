@@ -6,7 +6,6 @@ script: project/travis.sh
 branches:
   only:
     - master
-    - 2.x
     - /^v[0-9]/
 
 env:
@@ -15,7 +14,7 @@ env:
     - secure: PJ5eWT7PR7VUFrZiaZ6HvTOk+Is09fvpmHNkhAz25rlwThV+8dSNRiUcJCs7uYi+MrvY5JpsTzDihKq1pPbyYdQUaQvTkAB1BLY6lixleBi0QGk9YS5KyEYr/eLfopqBalRtCu7tViG8Zo23MXGhu4ZBbdrBIJHBJIqAV/q3H90UPasgOYtBPSf0lor0Hevm+lDz+zxYoPfsLqe02KceAJwl8hvwsFl8sFao7V90xvkzA2uTqw+GbZGXZ/hNBnaAYD5j7oipDLvX8YBtS1lQdfl2ZGIpwy5AEyt39jdc718+C8e5xPiU9713ESSLApge6NgVyfZDGd6qZs7Zg/dy2o5w40VJ8qUMK5QMCQuZQVbeYyvXrBd3Ye8zBMu4QoSBM62VtJrWQ3eK9nyaIg8XkBDVWX3YiMSEUyVd8WbzMjpi4yFphLmqqKTHUliQgGGCc/N2Qh9s+o7slX4Ko29qN+OTZOIxIxdr6YRHpb2N/n1b4pDUqDIpsN+UMDA3SpGmKN9INx+/A3gBDhOXPFV/pYVo4yxp/Vs7TMpXoJCef1dCU6mQpOdCHppOSX2Q5a9Qxd31LXTFRcNVihLK6sTq2K3aHGWhI3/uoXSMzvvaFCQpNX0HAluyazryIWh6xTRqMDHAImBbATpOEamr3xt3K7Qo2AJH+8mlwTx0lB4lweE=
   matrix:
     - TRAVIS_SBT_VERSION=0.13.x
-    - TRAVIS_SBT_VERSION=1.0.0-M5
+    - TRAVIS_SBT_VERSION=1.0.0-RC3
 
 cache:
   directories:

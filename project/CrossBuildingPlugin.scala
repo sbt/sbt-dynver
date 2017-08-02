@@ -9,17 +9,18 @@ object CrossBuildingPlugin extends AutoPlugin {
   override def trigger  = allRequirements
 
   object autoImport {
+    val sbtCrossVersion = sbtVersion in pluginCrossBuild
     val sbtPartV = settingKey[Option[(Int, Int)]]("")
     val sbtVersionSeries = settingKey[SbtVersionSeries]("")
   }
   import autoImport._
 
   override def globalSettings = Seq(
-    sbtPartV := CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value,
+    sbtPartV := CrossVersion partialVersion sbtCrossVersion.value,
     sbtVersionSeries := (sbtPartV.value match {
       case Some((0, 13)) => Sbt013
       case Some((1, _))  => Sbt1
-      case _             => sys error s"Unhandled sbt version ${(sbtVersion in pluginCrossBuild).value}"
+      case _             => sys error s"Unhandled sbt version ${sbtCrossVersion.value}"
     })
   )
 }

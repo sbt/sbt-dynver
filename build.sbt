@@ -9,8 +9,11 @@ organization := "com.dwijnand"
     homepage := scmInfo.value map (_.browseUrl)
      scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git"))
 
-   sbtPlugin := true
-scalaVersion := (sbtVersionSeries.value match { case Sbt013 => "2.10.6"; case Sbt1 => "2.12.2" })
+       sbtPlugin           := true
+      sbtVersion in Global := "0.13.16" // must be Global, otherwise ^^ won't change anything
+crossSbtVersions           := List("0.13.16", "1.0.0-RC3")
+
+scalaVersion := (sbtVersionSeries.value match { case Sbt013 => "2.10.6"; case Sbt1 => "2.12.3" })
 
        maxErrors := 15
 triggeredMessage := Watched.clearWhenTriggered
@@ -39,11 +42,11 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
 )
 import com.typesafe.tools.mima.core._, ProblemFilters._
 mimaPreviousArtifacts := (sbtVersionSeries.value match {
-  case Sbt013 => Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "1.3.0").value)
-  case Sbt1   => Set.empty // TODO: There is a sbt 1.0.0-M5 release of sbt-dynver, y u no work
+  case Sbt013 => Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0").value)
+  case Sbt1   => Set.empty // TODO
 })
 mimaBinaryIssueFilters ++= Seq()
 
-TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
+// TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
 
 cancelable in Global := true
