@@ -30,10 +30,12 @@ object DynVerPlugin extends AutoPlugin {
 
     dynver                  := DynVer.version(new Date),
     dynverCheckVersion      := (dynver.value == version.value),
-    dynverAssertVersion     := (
+    dynverAssertVersion     := {
+      val v = version.value
+      val dv = dynver.value
       if (!dynverCheckVersion.value)
-        sys.error(s"Version and dynver mismatch - version: ${version.value}, dynver: ${dynver.value}")
-    )
+        sys.error(s"Version and dynver mismatch - version: $v, dynver: $dv")
+    }
   )
 }
 
