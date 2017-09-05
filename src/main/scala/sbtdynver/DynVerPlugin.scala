@@ -12,21 +12,25 @@ object DynVerPlugin extends AutoPlugin {
     val dynver                  = taskKey[String]("The version of your project, from git")
     val dynverCurrentDate       = settingKey[Date]("The current date, for dynver purposes")
     val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
+    val dynverGitPreviousStableVersion = settingKey[Option[GitDescribeOutput]]("The last stable tag")
     val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
 
     // Would be nice if this were an 'upstream' key
     val isVersionStable         = taskKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
+    val previousStableVersion   = settingKey[String]("TODO")
   }
   import autoImport._
 
   override def buildSettings = Seq(
             version := dynverGitDescribeOutput.value.version(dynverCurrentDate.value),
+    previousStableVersion := dynverGitPreviousStableVersion.value.previousVersion(dynverCurrentDate.value),
          isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
     isVersionStable := dynverGitDescribeOutput.value.isVersionStable,
 
     dynverCurrentDate       := new Date,
     dynverGitDescribeOutput := DynVer.getGitDescribeOutput(dynverCurrentDate.value),
+    dynverGitPreviousStableVersion := DynVer.getGitPreviousStableTag(dynverCurrentDate.value),
 
     dynver                  := DynVer.version(new Date),
     dynverCheckVersion      := (dynver.value == version.value),
@@ -68,6 +72,7 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version: String            = ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
+  def previousVersion: String    = ref.dropV.value
   def isSnapshot(): Boolean      = isDirty() || hasNoTags() || commitSuffix.distance > 0
   def isVersionStable(): Boolean = !isDirty()
 
@@ -101,6 +106,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
     def version(d: Date): String = mkVersion(_.version, DynVer fallback d)
+    def previousVersion(d: Date): String = mkVersion(_.previousVersion, DynVer fallback d)
     def isSnapshot: Boolean      = _x.map(_.isSnapshot).getOrElse(true)
     def isVersionStable: Boolean = _x.map(_.isVersionStable).getOrElse(false)
 
@@ -112,6 +118,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File]) {
   def version(d: Date): String            = getGitDescribeOutput(d) version d
+  def previousVersion(d: Date) : String   = getGitPreviousStableTag(d) previousVersion d
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
   def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
 
@@ -124,6 +131,12 @@ sealed case class DynVer(wd: Option[File]) {
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
+  }
+
+  def getGitPreviousStableTag(d: Date) = {
+    Try(scala.sys.process.Process("git rev-list --tags --skip=1 --max-count=1") !! impl.NoProcessLogger).toOption.flatMap(x =>
+      Try(scala.sys.process.Process(s"git describe --tags --abbrev=0 --always $x") !! impl.NoProcessLogger).toOption
+    ).map(GitDescribeOutput.parse)
   }
 
   def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
