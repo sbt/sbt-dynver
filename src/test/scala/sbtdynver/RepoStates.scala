@@ -8,14 +8,16 @@ import scala.collection.JavaConverters._
 import org.eclipse.jgit.api._
 
 object RepoStates {
-  def notAGitRepo()               = State()
-  def noCommits()                 = notAGitRepo().init()
-  def onCommit()                  = noCommits().commit()
-  def onCommitDirty()             = onCommit().dirty()
-  def onTag(n: String = "v1.0.0") = onCommit().tag(n)
-  def onTagDirty()                = onTag().dirty()
-  def onTagAndCommit()            = onTag().commit()
-  def onTagAndCommitDirty()       = onTagAndCommit().dirty()
+  def notAGitRepo()                     = State()
+  def noCommits()                       = notAGitRepo().init()
+  def onCommit()                        = noCommits().commit()
+  def onCommitDirty()                   = onCommit().dirty()
+  def onTag(n: String = "v1.0.0")       = onCommit().tag(n)
+  def onTagDirty()                      = onTag().dirty()
+  def onTagAndCommit()                  = onTag().commit()
+  def onTagAndCommitDirty()             = onTagAndCommit().dirty()
+  def onTagAndSecondCommit()            = onTagAndCommitDirty().commit()
+  def onSecondTag(n: String = "v2.0.0") = onTagAndSecondCommit().tag(n)
 
   final case class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
@@ -36,6 +38,7 @@ object RepoStates {
     }
 
     def version()         = dynver.version(date).replaceAllLiterally(sha, "1234abcd")
+    def previousVersion() = dynver.previousVersion(date).replaceAllLiterally(sha, "1234abcd")
     def isSnapshot()      = dynver.isSnapshot()
     def isVersionStable() = dynver.isVersionStable()
 

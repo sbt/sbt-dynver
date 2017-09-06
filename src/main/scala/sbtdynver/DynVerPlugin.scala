@@ -18,7 +18,7 @@ object DynVerPlugin extends AutoPlugin {
 
     // Would be nice if this were an 'upstream' key
     val isVersionStable         = taskKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
-    val previousStableVersion   = settingKey[String]("TODO")
+    val previousStableVersion   = settingKey[String]("The version of the last stable version, from git")
   }
   import autoImport._
 
@@ -116,7 +116,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 }
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
-sealed case class DynVer(wd: Option[File]) {
+sealed case class DynVer(workingDirectory: Option[File]) {
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def previousVersion(d: Date) : String   = getGitPreviousStableTag(d) previousVersion d
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
@@ -127,15 +127,15 @@ sealed case class DynVer(wd: Option[File]) {
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
   def getGitDescribeOutput(d: Date) = {
-    val process = scala.sys.process.Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
+    val process = scala.sys.process.Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", workingDirectory)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
   }
 
   def getGitPreviousStableTag(d: Date) = {
-    Try(scala.sys.process.Process("git rev-list --tags --skip=1 --max-count=1") !! impl.NoProcessLogger).toOption.flatMap(x =>
-      Try(scala.sys.process.Process(s"git describe --tags --abbrev=0 --always $x") !! impl.NoProcessLogger).toOption
+    Try(scala.sys.process.Process("git rev-list --tags --skip=1 --max-count=1 --date-order", workingDirectory) !! impl.NoProcessLogger).toOption.flatMap(x =>
+      Try(scala.sys.process.Process(s"git describe --tags --abbrev=0 --always $x", workingDirectory) !! impl.NoProcessLogger).toOption
     ).map(GitDescribeOutput.parse)
   }
 
