@@ -11,9 +11,9 @@ organization := "com.dwijnand"
 
        sbtPlugin           := true
       sbtVersion in Global := "0.13.16" // must be Global, otherwise ^^ won't change anything
-crossSbtVersions           := List("0.13.16", "1.0.0-RC3")
+crossSbtVersions           := List("0.13.16", "1.1.0")
 
-scalaVersion := (sbtVersionSeries.value match { case Sbt013 => "2.10.6"; case Sbt1 => "2.12.3" })
+scalaVersion := (sbtVersionSeries.value match { case Sbt013 => "2.10.6"; case Sbt1 => "2.12.4" })
 
        maxErrors := 15
 triggeredMessage := Watched.clearWhenTriggered
@@ -33,7 +33,6 @@ libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.13.5"      
       logBuffered in Test := false
 parallelExecution in Test := true
 
-scriptedSettings
 scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 
