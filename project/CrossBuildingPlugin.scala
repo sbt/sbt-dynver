@@ -10,7 +10,7 @@ object CrossBuildingPlugin extends AutoPlugin {
 
   object autoImport {
     val sbtCrossVersion = sbtVersion in pluginCrossBuild
-    val sbtPartV = settingKey[Option[(Int, Int)]]("")
+    val sbtPartV = settingKey[Option[(Long, Long)]]("")
     val sbtVersionSeries = settingKey[SbtVersionSeries]("")
   }
   import autoImport._
