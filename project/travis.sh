@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
-if [[ "$TRAVIS_SBT_VERSION" == "0.13.x" ]]; then
-  SWITCH_SBT_VERSION=""
-  SCRIPTED="scripted"
-else
-  SWITCH_SBT_VERSION="^^$TRAVIS_SBT_VERSION"
-  SCRIPTED=""
-fi
+case "$TRAVIS_SBT_VERSION" in
+  0.13.x) SWITCH_SBT_VERSION="";        SCRIPTED="scripted" ;;
+     1.x) SWITCH_SBT_VERSION="^^1.0.0"; SCRIPTED=""         ;;
+       *) echo >&2 "Aborting: Unknown TRAVIS_SBT_VERSION: $TRAVIS_SBT_VERSION"; exit 1; ;;
+esac
 
 [[ "$TRAVIS_PULL_REQUEST" == "false"
 && "$TRAVIS_BRANCH" == "master"

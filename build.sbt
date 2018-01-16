@@ -10,7 +10,7 @@ organization := "com.dwijnand"
      scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git"))
 
        sbtPlugin           := true
-      sbtVersion in Global := "0.13.16" // must be Global, otherwise ^^ won't change anything
+      sbtVersion in Global := "1.0.0" // must be Global, otherwise ^^ won't change anything
 crossSbtVersions           := List("0.13.16", "1.0.0")
 
 scalaVersion := (sbtVersionSeries.value match { case Sbt013 => "2.10.6"; case Sbt1 => "2.12.4" })
