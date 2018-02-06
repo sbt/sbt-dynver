@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 case "$TRAVIS_SBT_VERSION" in
-  0.13.x) SWITCH_SBT_VERSION="";        ;;
-     1.x) SWITCH_SBT_VERSION="^^1.0.0"; ;;
+  0.13.x) SWITCH_SBT_VERSION="^^0.13.17"; ;;
+     1.x) SWITCH_SBT_VERSION="";          ;;
        *) echo >&2 "Aborting: Unknown TRAVIS_SBT_VERSION: $TRAVIS_SBT_VERSION"; exit 1; ;;
 esac
 
