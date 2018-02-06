@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 case "$TRAVIS_SBT_VERSION" in
-  0.13.x) SWITCH_SBT_VERSION="";        SCRIPTED="scripted" ;;
-     1.x) SWITCH_SBT_VERSION="^^1.0.0"; SCRIPTED=""         ;;
+  0.13.x) SWITCH_SBT_VERSION="";        ;;
+     1.x) SWITCH_SBT_VERSION="^^1.0.0"; ;;
        *) echo >&2 "Aborting: Unknown TRAVIS_SBT_VERSION: $TRAVIS_SBT_VERSION"; exit 1; ;;
 esac
 
@@ -23,4 +23,4 @@ else
   PUBLISH=publishLocal
 fi
 
-sbt "$SWITCH_SBT_VERSION" test "$SCRIPTED" mimaReportBinaryIssues "$PUBLISH"
+sbt "$SWITCH_SBT_VERSION" test scripted mimaReportBinaryIssues "$PUBLISH"
