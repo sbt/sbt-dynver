@@ -13,7 +13,11 @@ organization := "com.dwijnand"
       sbtVersion in Global := "1.0.0" // must be Global, otherwise ^^ won't change anything
 crossSbtVersions           := List("0.13.16", "1.0.0")
 
-scalaVersion := (sbtVersionSeries.value match { case Sbt013 => "2.10.6"; case Sbt1 => "2.12.4" })
+scalaVersion := (CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value match {
+  case Some((0, 13)) => "2.10.6"
+  case Some((1, _))  => "2.12.4"
+  case _             => sys error s"Unhandled sbt version ${(sbtVersion in pluginCrossBuild).value}"
+})
 
        maxErrors := 15
 triggeredMessage := Watched.clearWhenTriggered
@@ -37,13 +41,10 @@ scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.versio
 scriptedBufferLog := true
 
 def toSbtPlugin(m: ModuleID) = Def.setting(
-  Defaults.sbtPluginExtra(m, (sbtBinaryVersion in update).value, (scalaBinaryVersion in update).value)
+  Defaults.sbtPluginExtra(m, (sbtBinaryVersion in pluginCrossBuild).value, (scalaBinaryVersion in update).value)
 )
 
-mimaPreviousArtifacts := (sbtVersionSeries.value match {
-  case Sbt013 => Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0").value)
-  case Sbt1   => Set.empty // TODO
-})
+mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0").value)
 
 import com.typesafe.tools.mima.core._, ProblemFilters._
 mimaBinaryIssueFilters ++= Seq()
