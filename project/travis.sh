@@ -19,13 +19,6 @@ on_a_tag=$?
 
 if [[ $on_the_master_branch == 0 || $on_a_tag == 0 ]]; then
   PUBLISH=publish
-  mkdir ~/.bintray
-  cat > ~/.bintray/.credentials <<EOF
-realm = Bintray API Realm
-host = api.bintray.com
-user = dwijnand
-password = $BINTRAY_API_KEY
-EOF
 else
   PUBLISH=publishLocal
 fi
