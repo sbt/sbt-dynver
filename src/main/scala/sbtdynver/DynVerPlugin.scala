@@ -10,6 +10,7 @@ object DynVerPlugin extends AutoPlugin {
 
   object autoImport {
     val dynver                  = taskKey[String]("The version of your project, from git")
+    val dynverInstance          = settingKey[DynVer]("The dynver instance for this build.")
     val dynverCurrentDate       = settingKey[Date]("The current date, for dynver purposes")
     val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
     val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
@@ -26,9 +27,10 @@ object DynVerPlugin extends AutoPlugin {
     isVersionStable := dynverGitDescribeOutput.value.isVersionStable,
 
     dynverCurrentDate       := new Date,
-    dynverGitDescribeOutput := DynVer.getGitDescribeOutput(dynverCurrentDate.value),
+    dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value)),
+    dynverGitDescribeOutput := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
 
-    dynver                  := DynVer.version(new Date),
+    dynver                  := dynverInstance.value.version(new Date),
     dynverCheckVersion      := (dynver.value == version.value),
     dynverAssertVersion     := {
       val v = version.value
