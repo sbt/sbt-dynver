@@ -19,7 +19,7 @@ Inspired by:
 
 Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/dynver.sbt`:
 
-    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0")
+    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.1.0")
 
 Then make sure to **NOT set the version setting**, otherwise you will override `sbt-dynver`.
 
