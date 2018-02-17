@@ -10,9 +10,10 @@ object DynVerPlugin extends AutoPlugin {
 
   object autoImport {
     val dynver                  = taskKey[String]("The version of your project, from git")
-    val dynverInstance          = settingKey[DynVer]("The dynver instance for this build.")
+    val dynverInstance          = settingKey[DynVer]("The dynver instance for this build")
     val dynverCurrentDate       = settingKey[Date]("The current date, for dynver purposes")
     val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
+    val dynverSonatypeSnapshots = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
     val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
 
@@ -22,13 +23,19 @@ object DynVerPlugin extends AutoPlugin {
   import autoImport._
 
   override def buildSettings = Seq(
-            version := dynverGitDescribeOutput.value.version(dynverCurrentDate.value),
+            version := {
+              val out = dynverGitDescribeOutput.value
+              val date = dynverCurrentDate.value
+              if(dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
+              else out.version(date)
+            },
          isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
     isVersionStable := dynverGitDescribeOutput.value.isVersionStable,
 
     dynverCurrentDate       := new Date,
     dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value)),
     dynverGitDescribeOutput := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
+    dynverSonatypeSnapshots := false,
 
     dynver                  := dynverInstance.value.version(new Date),
     dynverCheckVersion      := (dynver.value == version.value),
@@ -74,6 +81,10 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
     else ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
   }
 
+  def sonatypeVersion: String =
+    if(isSnapshot()) version + "-SNAPSHOT"
+    else version
+
   def isDirtyAfterTag            = commitSuffix.distance == 0 && ref.isTag && isDirty()
   def isSnapshot(): Boolean      = isDirty() || hasNoTags() || commitSuffix.distance > 0
   def isVersionStable(): Boolean = !isDirty()
@@ -107,9 +118,10 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
-    def version(d: Date): String = mkVersion(_.version, DynVer fallback d)
-    def isSnapshot: Boolean      = _x.map(_.isSnapshot).getOrElse(true)
-    def isVersionStable: Boolean = _x.map(_.isVersionStable).getOrElse(false)
+    def version(d: Date): String          = mkVersion(_.version, DynVer fallback d)
+    def sonatypeVersion(d: Date): String  = mkVersion(_.sonatypeVersion, DynVer fallback d)
+    def isSnapshot: Boolean               = _x.map(_.isSnapshot).getOrElse(true)
+    def isVersionStable: Boolean          = _x.map(_.isVersionStable).getOrElse(false)
 
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
     def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
@@ -119,6 +131,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File]) {
   def version(d: Date): String            = getGitDescribeOutput(d) version d
+  def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d) sonatypeVersion d
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
   def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
 
