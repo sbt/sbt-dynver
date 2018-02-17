@@ -1,0 +1,28 @@
+> gitInitSetup
+> dirty foo
+> gitAdd
+> gitCommit
+> gitTag foo-v1.0.0
+
+> reload
+> checkOnTagFoo
+
+> dirty bar
+> gitAdd
+> gitCommit
+> gitTag bar-v2.0.0
+
+> reload
+> checkOnTagBar
+
+> dirty bar
+> reload
+> checkOnTagBarDirty
+
+> gitCommit
+> reload
+> checkOnTagBarAndCommit
+
+> dirty bar
+> reload
+> checkOnTagBarAndCommitDirty
