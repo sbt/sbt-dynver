@@ -15,19 +15,21 @@ object DynVerPlugin extends AutoPlugin {
     val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
     val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
+    val dynverTagPrefix         = settingKey[String]("The prefix to use when matching the verision tag")
 
     // Would be nice if this were an 'upstream' key
     val isVersionStable         = taskKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
   }
   import autoImport._
 
-  override def buildSettings = Seq(
+  override def projectSettings = Seq(
             version := dynverGitDescribeOutput.value.version(dynverCurrentDate.value),
          isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
     isVersionStable := dynverGitDescribeOutput.value.isVersionStable,
 
+    dynverTagPrefix         := "",
     dynverCurrentDate       := new Date,
-    dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value)),
+    dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value), dynverTagPrefix.value),
     dynverGitDescribeOutput := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
 
     dynver                  := dynverInstance.value.version(new Date),
@@ -112,7 +114,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 }
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
-sealed case class DynVer(wd: Option[File]) {
+sealed case class DynVer(wd: Option[File], prefix: String) {
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
   def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
@@ -122,8 +124,9 @@ sealed case class DynVer(wd: Option[File]) {
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
   def getGitDescribeOutput(d: Date) = {
-    val process = scala.sys.process.Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
+    val process = scala.sys.process.Process(s"""git describe --tags --abbrev=8 --match ${prefix}v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
     Try(process !! impl.NoProcessLogger).toOption
+      .map(_.stripPrefix(prefix))
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
   }
@@ -131,7 +134,7 @@ sealed case class DynVer(wd: Option[File]) {
   def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
   def fallback(d: Date): String = s"HEAD+${timestamp(d)}"
 }
-object DynVer extends DynVer(None) with (Option[File] => DynVer)
+object DynVer extends DynVer(None,"") with ((Option[File], String) => DynVer)
 
 object `package`
 
