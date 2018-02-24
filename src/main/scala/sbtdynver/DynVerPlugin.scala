@@ -70,7 +70,7 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version: String            = {
-    if(isDirtyAfterTag) s"${ref.dropV.value}+0-${dirtySuffix.dropPlus.value}"
+    if(isDirtyAfterTag) s"${ref.dropV.value}+${commitSuffix.distance}-${commitSuffix.sha}-${dirtySuffix.dropPlus.value}"
     else ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
   }
 
@@ -127,7 +127,7 @@ sealed case class DynVer(wd: Option[File]) {
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
   def getGitDescribeOutput(d: Date) = {
-    val process = scala.sys.process.Process(s"""git describe --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
+    val process = scala.sys.process.Process(s"""git describe --long --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
