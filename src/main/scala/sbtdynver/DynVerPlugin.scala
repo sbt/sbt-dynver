@@ -70,7 +70,7 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version: String            = {
-    if(isDirtyAfterTag) s"${ref.dropV.value}+${commitSuffix.distance}-${commitSuffix.sha}-${dirtySuffix.dropPlus.value}"
+    if(isDirtyAfterTag) s"${ref.dropV.value}+${commitSuffix.distance}-${commitSuffix.sha}+${dirtySuffix.dropPlus.value}"
     else ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
   }
 
