@@ -13,7 +13,7 @@ TaskKey[Unit]("checkNoCommits")           := check(version.value, s"HEAD+${tstam
 TaskKey[Unit]("checkOnCommit")            := check(version.value, s"${headSha.value}")
 TaskKey[Unit]("checkOnCommitDirty")       := check(version.value, s"${headSha.value}+${tstamp.value}")
 TaskKey[Unit]("checkOnTag")               := check(version.value, s"1.0.0")
-TaskKey[Unit]("checkOnTagDirty")          := check(version.value, s"1.0.0+0-${tstamp.value}")
+TaskKey[Unit]("checkOnTagDirty")          := check(version.value, s"1.0.0+0-${headSha.value}+${tstamp.value}")
 TaskKey[Unit]("checkOnTagAndCommit")      := check(version.value, s"1.0.0+1-${headSha.value}")
 TaskKey[Unit]("checkOnTagAndCommitDirty") := check(version.value, s"1.0.0+1-${headSha.value}+${tstamp.value}")
 
