@@ -27,7 +27,7 @@ object IsSnapshotSpec extends Properties("IsSnapshotSpec") {
 }
 
 object SonatypeSnapshotSpec extends Properties("SonatypeSnapshotSpec") {
-  property("on tag v1.0.0 with local changes")                = onTagDirty().sonatypeVersion()     ?= "1.0.0+0-20160917-0000-SNAPSHOT"
+  property("on tag v1.0.0 with local changes")                = onTagDirty().sonatypeVersion()     ?= "1.0.0+0-1234abcd+20160917-0000-SNAPSHOT"
   property("on tag v1.0.0 and 1 commit, w/o local changes S") = onTagAndCommit().sonatypeVersion() ?= "1.0.0+1-1234abcd-SNAPSHOT"
   property("on tag v1.0.0, w/o local changes")                = onTag().sonatypeVersion()          ?= "1.0.0"
 }
