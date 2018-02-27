@@ -64,7 +64,7 @@ object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
   final implicit class GitCommitSuffixOps(val x: GitCommitSuffix) extends AnyVal { import x._
     def isEmpty: Boolean = distance <= 0 || sha.isEmpty
     def mkString(prefix: String, infix: String, suffix: String): String =
-      if (isEmpty) "" else prefix + distance + infix + sha + suffix
+      if (sha.isEmpty) "" else prefix + distance + infix + sha + suffix
   }
 }
 
@@ -77,7 +77,7 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version: String            = {
-    if(isDirtyAfterTag) s"${ref.dropV.value}+${commitSuffix.distance}-${commitSuffix.sha}+${dirtySuffix.dropPlus.value}"
+    if (isCleanAfterTag) ref.dropV.value + dirtySuffix.value // no commit info if clean after tag
     else ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
   }
 
@@ -90,7 +90,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
 
   def hasNoTags(): Boolean       = !ref.isTag
   def isDirty(): Boolean         = dirtySuffix.value.nonEmpty
-  def isDirtyAfterTag: Boolean   = ref.isTag && commitSuffix.isEmpty && isDirty()
+  def isCleanAfterTag: Boolean   = ref.isTag && commitSuffix.isEmpty && !isDirty()
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {

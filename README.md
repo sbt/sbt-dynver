@@ -75,8 +75,11 @@ version in ThisBuild ~= (_.replace('+', '-'))
 If instead you want to completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
 
 ```scala
-def versionFmt(out: sbtdynver.GitDescribeOutput): String =
-  out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + out.dirtySuffix.dropPlus.mkString("-", "")
+def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
+  val dirtySuffix = out.dirtySuffix.dropPlus.mkString("-", "")
+  if (out.isCleanAfterTag) out.ref.dropV.value + dirtySuffix // no commit info if clean after tag
+  else out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + dirtySuffix
+}
 
 def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
 
