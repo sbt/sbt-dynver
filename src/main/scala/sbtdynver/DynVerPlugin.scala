@@ -85,12 +85,12 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
     if(isSnapshot()) version + "-SNAPSHOT"
     else version
 
-  def isDirtyAfterTag            = commitSuffix.distance == 0 && ref.isTag && isDirty()
-  def isSnapshot(): Boolean      = isDirty() || hasNoTags() || commitSuffix.distance > 0
+  def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty || isDirty()
   def isVersionStable(): Boolean = !isDirty()
 
-  def isDirty(): Boolean         = dirtySuffix.value.nonEmpty
   def hasNoTags(): Boolean       = !ref.isTag
+  def isDirty(): Boolean         = dirtySuffix.value.nonEmpty
+  def isDirtyAfterTag: Boolean   = ref.isTag && commitSuffix.isEmpty && isDirty()
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
