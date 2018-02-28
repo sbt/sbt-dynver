@@ -36,6 +36,7 @@ object RepoStates {
     }
 
     def version()         = dynver.version(date).replaceAllLiterally(sha, "1234abcd")
+    def sonatypeVersion() = dynver.sonatypeVersion(date).replaceAllLiterally(sha, "1234abcd")
     def isSnapshot()      = dynver.isSnapshot()
     def isVersionStable() = dynver.isVersionStable()
 
