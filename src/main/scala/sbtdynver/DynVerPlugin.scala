@@ -33,7 +33,10 @@ object DynVerPlugin extends AutoPlugin {
     isVersionStable := dynverGitDescribeOutput.value.isVersionStable,
 
     dynverCurrentDate       := new Date,
-    dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value)),
+    dynverInstance          := Def.settingDyn {
+      val ref = thisProjectRef.value
+      Def.setting(DynVer(Some((baseDirectory in ref in ThisBuild).value)))
+    },
     dynverGitDescribeOutput := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
     dynverSonatypeSnapshots := false,
 
