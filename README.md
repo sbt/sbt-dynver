@@ -12,6 +12,11 @@ Inspired by:
 * The way that Mercurial [versions itself](https://selenic.com/hg/file/3.9.1/setup.py#l179)
 * The [GitVersioning][] AutoPlugin in [sbt-git][].
 
+Features:
+* Dynamically set your version by looking at the closest tag to the current commit
+* Detect the previous version
+    * Useful for automatic [binary compatibility checks](https://github.com/lightbend/migration-manager) across library versions
+
 [sbt-git]: https://github.com/sbt/sbt-git
 [GitVersioning]: https://github.com/sbt/sbt-git/blob/v0.8.5/src/main/scala/com/typesafe/sbt/SbtGit.scala#L266-L270
 
@@ -42,6 +47,22 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 | when there are no tags, on commit 1234abcd with local changes        | 1234abcd+20140707-1030         | true       | false           |
 | when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       | false           |
 ```
+
+#### Previous Version Detection
+Given the following git history, here's what `previousStableVersion` returns when at each commit:
+```
+*   (tagged: v1.1.0)       --> Some("1.0.0")
+*   (untagged)             --> Some("1.0.0")
+| * (tagged: v2.1.0)       --> Some("2.0.0")
+| * (tagged: v2.0.0)       --> Some("1.0.0")
+|/  
+*   (tagged: v1.0.0)       --> None
+*   (untagged)             --> None
+```
+Previous version is detected by looking at the closest tag of the parent commit of HEAD.
+
+If the current commit has multiple parents, the first parent will be used. In git, the first parent
+comes from the branch you merged into (e.g. `master` in `git checkout master && git merge my-feature-branch`)
 
 ## Tag Requirements
 

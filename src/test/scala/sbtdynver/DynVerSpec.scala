@@ -15,6 +15,83 @@ object VersionSpec extends Properties("VersionSpec") {
   property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().version() ?= "1.0.0+1-1234abcd+20160917-0000"
 }
 
+object PreviousVersionSpec extends Properties("PreviousVersionSpec") {
+  property("not a git repo")                                  = notAGitRepo().previousVersion()             ?= None
+  property("no commits")                                      = noCommits().previousVersion()               ?= None
+  property("on commit, w/o local changes")                    = onCommit().previousVersion()                ?= None
+  property("on commit with local changes")                    = onCommitDirty().previousVersion()           ?= None
+  property("on tag v1.0.0, w/o local changes")                = onTag().previousVersion()                   ?= None
+  property("on tag v1.0.0 with local changes")                = onTagDirty().previousVersion()              ?= None
+  property("on tag v1.0.0 and 1 commit, w/o local changes")   = onTagAndCommit().previousVersion()          ?= Some("1.0.0")
+  property("on tag v1.0.0 and 1 commit with local changes")   = onTagAndCommitDirty().previousVersion()     ?= Some("1.0.0")
+  property("on tag v1.0.0 and 2 commits, w/o local changes")  = onTagAndSecondCommit().previousVersion()    ?= Some("1.0.0")
+  property("on tag v2.0.0, w/o local changes")                = onSecondTag().previousVersion()             ?= Some("1.0.0")
+  property("with merge commits") = {
+    val state = onTag()
+      .branch("newbranch")
+      .commit()
+      .checkout("master")
+      .merge("newbranch")
+      .tag("v2.0.0")
+
+    state.previousVersion() ?= Some("1.0.0")
+  }
+
+  property("with merge commits and with untagged HEAD") = {
+    val state = onTag()
+      .branch("newbranch")
+      .commit()
+      .checkout("master")
+      .merge("newbranch")
+
+    state.previousVersion() ?= Some("1.0.0")
+  }
+
+  property("multiple branches, each with their own tags") = {
+    val state = onTag()
+
+    state
+      .branch("v2")
+      .commit()
+      .tag("v2.0.0")
+
+    state
+      .commit()
+      .tag("v2.1.0")
+
+    state
+      .checkout("master") // checkout the v1.x branch
+      .commit()
+      .tag("v1.1.0")
+
+    state.checkout("v2")
+
+    state.previousVersion() ?= Some("2.0.0")
+  }
+
+  property("merge commit where both branches have tags - should use the first parent (branch that was merged into)") = {
+    val state = onTag()
+
+    state
+      .branch("v2")
+      .commit()
+      .tag("v2.0.0")
+
+    state
+      .commit()
+      .tag("v2.1.0")
+
+    state
+      .checkout("master") // checkout the v1.x branch
+      .commit()
+      .tag("v1.1.0")
+
+    state.merge("v2")
+
+    state.previousVersion() ?= Some("1.1.0")
+  }
+}
+
 object IsSnapshotSpec extends Properties("IsSnapshotSpec") {
   property("not a git repo")                                = notAGitRepo().isSnapshot()         ?= true
   property("no commits")                                    = noCommits().isSnapshot()           ?= true

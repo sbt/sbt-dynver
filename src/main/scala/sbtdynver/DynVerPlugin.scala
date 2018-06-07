@@ -1,8 +1,12 @@
 package sbtdynver
 
 import java.util._
+
 import scala.util._
-import sbt._, Keys._
+import sbt._
+import Keys._
+
+import scala.sys.process.ProcessLogger
 
 object DynVerPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
@@ -14,28 +18,32 @@ object DynVerPlugin extends AutoPlugin {
     val dynverCurrentDate       = settingKey[Date]("The current date, for dynver purposes")
     val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
     val dynverSonatypeSnapshots = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
+    val dynverGitPreviousStableVersion = settingKey[Option[GitDescribeOutput]]("The last stable tag")
     val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
 
     // Would be nice if this were an 'upstream' key
     val isVersionStable         = taskKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
+    val previousStableVersion   = settingKey[Option[String]]("The last stable version as seen from the current commit (does not include the current commit's version/tag)")
   }
   import autoImport._
 
   override def buildSettings = Seq(
-            version := {
-              val out = dynverGitDescribeOutput.value
-              val date = dynverCurrentDate.value
-              if(dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
-              else out.version(date)
-            },
-         isSnapshot := dynverGitDescribeOutput.value.isSnapshot,
-    isVersionStable := dynverGitDescribeOutput.value.isVersionStable,
+    version := {
+      val out = dynverGitDescribeOutput.value
+      val date = dynverCurrentDate.value
+      if(dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
+      else out.version(date)
+    },
+    isSnapshot              := dynverGitDescribeOutput.value.isSnapshot,
+    isVersionStable         := dynverGitDescribeOutput.value.isVersionStable,
+    previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
     dynverCurrentDate       := new Date,
     dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value)),
     dynverGitDescribeOutput := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
     dynverSonatypeSnapshots := false,
+    dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
 
     dynver                  := dynverInstance.value.version(new Date),
     dynverCheckVersion      := (dynver.value == version.value),
@@ -86,6 +94,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
     else version
 
   def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty || isDirty()
+  def previousVersion: String    = ref.dropV.value
   def isVersionStable(): Boolean = !isDirty()
 
   def hasNoTags(): Boolean       = !ref.isTag
@@ -120,8 +129,10 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
     def version(d: Date): String          = mkVersion(_.version, DynVer fallback d)
     def sonatypeVersion(d: Date): String  = mkVersion(_.sonatypeVersion, DynVer fallback d)
+    def previousVersion: Option[String]   = _x.map(_.previousVersion)
     def isSnapshot: Boolean               = _x.map(_.isSnapshot).getOrElse(true)
     def isVersionStable: Boolean          = _x.map(_.isVersionStable).getOrElse(false)
+
 
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
     def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
@@ -130,8 +141,12 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File]) {
+
+  private val errLogger = ProcessLogger(stdOut => (), stdErr => println(stdErr))
+
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d) sonatypeVersion d
+  def previousVersion : Option[String]    = getGitPreviousStableTag.previousVersion
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
   def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
 
@@ -146,8 +161,25 @@ sealed case class DynVer(wd: Option[File]) {
       .map(GitDescribeOutput.parse)
   }
 
+  def getGitPreviousStableTag: Option[GitDescribeOutput] = {
+    (for {
+      // Find the parent of the current commit. The "^1" instructs it to show only the first parent,
+      // as merge commits can have multiple parents
+      parentHash <- execAndHandleEmptyOuptut(s"git --no-pager log --pretty=%H -n 1 HEAD^1")
+      // Find the closest tag of the parent commit
+      tag <- execAndHandleEmptyOuptut(s"git describe --tags --abbrev=0 --always $parentHash")
+    } yield {
+      GitDescribeOutput.parse(tag)
+    }).toOption
+  }
+
   def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
   def fallback(d: Date): String = s"HEAD+${timestamp(d)}"
+
+  private def execAndHandleEmptyOuptut(cmd: String): Try[String] = {
+    Try(scala.sys.process.Process(cmd, wd) !! errLogger)
+      .filter(_.trim.nonEmpty)
+  }
 }
 object DynVer extends DynVer(None) with (Option[File] => DynVer)
 
