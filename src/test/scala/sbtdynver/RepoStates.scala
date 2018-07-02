@@ -13,7 +13,7 @@ import org.eclipse.jgit.merge.MergeStrategy
 object RepoStates {
   def notAGitRepo()                     = State()
   def noCommits()                       = notAGitRepo().init()
-  def onCommit()                        = noCommits().commit()
+  def onCommit()                        = noCommits().commit().commit().commit()
   def onCommitDirty()                   = onCommit().dirty()
   def onTag(n: String = "v1.0.0")       = onCommit().tag(n)
   def onTagDirty()                      = onTag().dirty()
