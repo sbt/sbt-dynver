@@ -86,7 +86,8 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version: String            = {
     if (isCleanAfterTag) ref.dropV.value + dirtySuffix.value // no commit info if clean after tag
-    else ref.dropV.value + commitSuffix.mkString("+", "-", "") + dirtySuffix.value
+    else if (commitSuffix.sha.nonEmpty) ref.dropV.value + "+" + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix.value
+    else commitSuffix.distance + "-" + ref.value + dirtySuffix.value
   }
 
   def sonatypeVersion: String =
@@ -154,11 +155,23 @@ sealed case class DynVer(wd: Option[File]) {
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
+  def getDistanceToFirstCommit() = {
+    val process = scala.sys.process.Process(s"git log --pretty=oneline --abbrev-commit", wd)
+    Try(process !! impl.NoProcessLogger).toOption
+      .map(_.lines.size)
+  }
+
   def getGitDescribeOutput(d: Date) = {
     val process = scala.sys.process.Process(s"""git describe --long --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
+      .flatMap(output =>
+        if (output.hasNoTags) getDistanceToFirstCommit().map(dist => {
+          output.copy(commitSuffix = output.commitSuffix.copy(distance = dist))
+        })
+        else Some(output)
+      )
   }
 
   def getGitPreviousStableTag: Option[GitDescribeOutput] = {

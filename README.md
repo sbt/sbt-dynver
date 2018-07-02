@@ -43,8 +43,8 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 | when on tag v1.0.0 with local changes                                | 1.0.0+0-1234abcd+20140707-1030 | true       | false           |
 | when on tag v1.0.0 +3 commits, on commit 1234abcd, w/o local changes | 1.0.0+3-1234abcd               | true       | true            |
 | when on tag v1.0.0 +3 commits, on commit 1234abcd with local changes | 1.0.0+3-1234abcd+20140707-1030 | true       | false           |
-| when there are no tags, on commit 1234abcd, w/o local changes        | 1234abcd                       | true       | true            |
-| when there are no tags, on commit 1234abcd with local changes        | 1234abcd+20140707-1030         | true       | false           |
+| when there are no tags, on commit 1234abcd, w/o local changes        | 3-1234abcd                     | true       | true            |
+| when there are no tags, on commit 1234abcd with local changes        | 3-1234abcd+20140707-1030       | true       | false           |
 | when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       | false           |
 ```
 
