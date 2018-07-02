@@ -82,7 +82,6 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
     def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
   }
 }
-
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version: String            = {
     if (isCleanAfterTag) ref.dropV.value + dirtySuffix.value // no commit info if clean after tag
@@ -158,7 +157,7 @@ sealed case class DynVer(wd: Option[File]) {
   def getDistanceToFirstCommit() = {
     val process = scala.sys.process.Process(s"git log --pretty=oneline --abbrev-commit", wd)
     Try(process !! impl.NoProcessLogger).toOption
-      .map(_.lines.size)
+      .map(_.split("\n").count(_.nonEmpty))
   }
 
   def getGitDescribeOutput(d: Date) = {
