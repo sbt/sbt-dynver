@@ -155,9 +155,9 @@ sealed case class DynVer(wd: Option[File]) {
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
   def getDistanceToFirstCommit() = {
-    val process = scala.sys.process.Process(s"git log --pretty=oneline --abbrev-commit", wd)
+    val process = scala.sys.process.Process(s"git rev-list --count HEAD", wd)
     Try(process !! impl.NoProcessLogger).toOption
-      .map(_.split("\n").count(_.nonEmpty))
+      .map(_.trim.toInt)
   }
 
   def getGitDescribeOutput(d: Date) = {
