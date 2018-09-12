@@ -24,7 +24,7 @@ Features:
 
 Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/dynver.sbt`:
 
-    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.0.0")
+    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.1.0")
 
 Then make sure to **NOT set the version setting**, otherwise you will override `sbt-dynver`.
 
@@ -63,6 +63,12 @@ Previous version is detected by looking at the closest tag of the parent commit 
 
 If the current commit has multiple parents, the first parent will be used. In git, the first parent
 comes from the branch you merged into (e.g. `master` in `git checkout master && git merge my-feature-branch`)
+
+To use this feature with the Migration Manager [MiMa](https://github.com/lightbend/migration-manager) sbt plugin, add
+
+```$scala
+mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% name.value % _).toSet
+```
 
 ## Tag Requirements
 
