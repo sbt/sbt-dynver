@@ -86,6 +86,13 @@ If you're not seeing what you expect, then start with this:
 * `dynverCheckVersion`: Checks if version and dynver match
 * `dynverAssertVersion`: Asserts if version and dynver match
 
+## Publishing to Sonatype's snapshots repository (aka "Sonatype mode")
+
+If you're publishing to Sonatype sonashots then enable `dynverSonatypeSnapshots in ThisBuild := true` to append
+"-SNAPSHOT" to the version if `isSnapshot` is `true` (which it is unless building on a tag with no local
+changes).  This opt-in exists because the Sonatype's snapshots repository requires all versions to end with
+`-SNAPSHOT`.
+
 ## Custom version string
 
 Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
