@@ -78,11 +78,12 @@ If you're not seeing what you expect, then start with this:
 
     git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"
 
-## Tasks
+## Settings and Tasks
 
 * `dynver`: Returns the dynamic version of your project, inferred from the git metadata
 * `dynverCurrentDate`: Returns the captured current date. Used for (a) the dirty suffix of `dynverGitDescribeOutput` and (b) the fallback version (e.g if not a git repo).
 * `dynverGitDescribeOutput`: Returns the captured `git describe` out, in a structured form. Useful to define a [custom version string](#custom-version-string).
+* `dynverSonatypeSnapshots`: Set to true if you are publishing snapshots to Sonatype, for more check https://github.com/dwijnand/sbt-dynver/issues/53
 * `dynverCheckVersion`: Checks if version and dynver match
 * `dynverAssertVersion`: Asserts if version and dynver match
 
