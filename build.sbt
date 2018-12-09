@@ -49,7 +49,10 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
 mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0").value)
 
 import com.typesafe.tools.mima.core._, ProblemFilters._
-mimaBinaryIssueFilters ++= Seq()
+mimaBinaryIssueFilters ++= Seq(
+  // Migrated from a task key to a setting key
+  exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.isVersionStable"),
+)
 
 // TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
 

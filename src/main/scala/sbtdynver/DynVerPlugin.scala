@@ -23,7 +23,7 @@ object DynVerPlugin extends AutoPlugin {
     val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
 
     // Would be nice if this were an 'upstream' key
-    val isVersionStable         = taskKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
+    val isVersionStable         = settingKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
     val previousStableVersion   = settingKey[Option[String]]("The last stable version as seen from the current commit (does not include the current commit's version/tag)")
   }
   import autoImport._
