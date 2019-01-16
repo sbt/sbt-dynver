@@ -6,7 +6,7 @@ import scala.util._
 import sbt._
 import Keys._
 
-import scala.sys.process.ProcessLogger
+import scala.sys.process.{ Process, ProcessLogger }
 
 object DynVerPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
@@ -138,9 +138,6 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File]) {
-
-  private val errLogger = ProcessLogger(stdOut => (), stdErr => println(stdErr))
-
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d) sonatypeVersion d
   def previousVersion : Option[String]    = getGitPreviousStableTag.previousVersion
@@ -151,14 +148,14 @@ sealed case class DynVer(wd: Option[File]) {
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
-  def getDistanceToFirstCommit() = {
-    val process = scala.sys.process.Process(s"git rev-list --count HEAD", wd)
+  def getDistanceToFirstCommit(): Option[Int] = {
+    val process = Process(s"git rev-list --count HEAD", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.trim.toInt)
   }
 
-  def getGitDescribeOutput(d: Date) = {
-    val process = scala.sys.process.Process(s"""git describe --long --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
+  def getGitDescribeOutput(d: Date): Option[GitDescribeOutput] = {
+    val process = Process(s"git describe --long --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
@@ -171,22 +168,22 @@ sealed case class DynVer(wd: Option[File]) {
   }
 
   def getGitPreviousStableTag: Option[GitDescribeOutput] = {
-    (for {
+    for {
       // Find the parent of the current commit. The "^1" instructs it to show only the first parent,
       // as merge commits can have multiple parents
-      parentHash <- execAndHandleEmptyOuptut(s"git --no-pager log --pretty=%H -n 1 HEAD^1")
+      parentHash <- execAndHandleEmptyOutput("git --no-pager log --pretty=%H -n 1 HEAD^1")
       // Find the closest tag of the parent commit
-      tag <- execAndHandleEmptyOuptut(s"git describe --tags --abbrev=0 --always $parentHash")
+      tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --always $parentHash")
     } yield {
       GitDescribeOutput.parse(tag)
-    }).toOption
+    }
   }
 
   def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
   def fallback(d: Date): String = s"HEAD+${timestamp(d)}"
 
-  private def execAndHandleEmptyOuptut(cmd: String): Try[String] = {
-    Try(scala.sys.process.Process(cmd, wd) !! errLogger)
+  private def execAndHandleEmptyOutput(cmd: String): Option[String] = {
+    Try(Process(cmd, wd) !! impl.NoProcessLogger).toOption
       .filter(_.trim.nonEmpty)
   }
 }
