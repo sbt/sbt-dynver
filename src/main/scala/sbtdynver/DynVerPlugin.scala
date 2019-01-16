@@ -128,9 +128,8 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     def version(d: Date): String          = mkVersion(_.version, DynVer fallback d)
     def sonatypeVersion(d: Date): String  = mkVersion(_.sonatypeVersion, DynVer fallback d)
     def previousVersion: Option[String]   = _x.map(_.previousVersion)
-    def isSnapshot: Boolean               = _x.map(_.isSnapshot).getOrElse(true)
-    def isVersionStable: Boolean          = _x.map(_.isVersionStable).getOrElse(false)
-
+    def isSnapshot: Boolean               = _x.forall(_.isSnapshot)
+    def isVersionStable: Boolean          = _x.exists(_.isVersionStable)
 
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
     def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
