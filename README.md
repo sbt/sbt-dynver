@@ -132,6 +132,28 @@ Essentially this:
 2. defines the fallback version string, with `fallbackVersion`, and
 3. wires everything back together
 
+## Sanity checking the version
+
+As a sanity check, you can stop the build from loading by running a check during sbt's `onLoad`.
+For instance, to make sure that the version is derived from tags you can use:
+
+```scala
+Global / onLoad := (Global / onLoad).value.andThen { s =>
+  val v = version.value
+  if (dynverGitDescribeOutput.value.hasNoTags)
+    throw new MessageOnlyException(
+      s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $v"
+    )
+  s
+}
+```
+
+This will return an error message like the following:
+
+```
+[error] Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: 3-d9489763
+```
+
 ## Dependencies
 
 * `git`, on the `PATH`
