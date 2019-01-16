@@ -13,14 +13,14 @@ object DynVerPlugin extends AutoPlugin {
   override def trigger  = allRequirements
 
   object autoImport {
-    val dynver                  = taskKey[String]("The version of your project, from git")
-    val dynverInstance          = settingKey[DynVer]("The dynver instance for this build")
-    val dynverCurrentDate       = settingKey[Date]("The current date, for dynver purposes")
-    val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
-    val dynverSonatypeSnapshots = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
+    val dynver                         = taskKey[String]("The version of your project, from git")
+    val dynverInstance                 = settingKey[DynVer]("The dynver instance for this build")
+    val dynverCurrentDate              = settingKey[Date]("The current date, for dynver purposes")
+    val dynverGitDescribeOutput        = settingKey[Option[GitDescribeOutput]]("The output from git describe")
+    val dynverSonatypeSnapshots        = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
     val dynverGitPreviousStableVersion = settingKey[Option[GitDescribeOutput]]("The last stable tag")
-    val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
-    val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
+    val dynverCheckVersion             = taskKey[Boolean]("Checks if version and dynver match")
+    val dynverAssertVersion            = taskKey[Unit]("Asserts if version and dynver match")
 
     // Would be nice if this were an 'upstream' key
     val isVersionStable         = settingKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
@@ -32,17 +32,17 @@ object DynVerPlugin extends AutoPlugin {
     version := {
       val out = dynverGitDescribeOutput.value
       val date = dynverCurrentDate.value
-      if(dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
+      if (dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
       else out.version(date)
     },
     isSnapshot              := dynverGitDescribeOutput.value.isSnapshot,
     isVersionStable         := dynverGitDescribeOutput.value.isVersionStable,
     previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
-    dynverCurrentDate       := new Date,
-    dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value)),
-    dynverGitDescribeOutput := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
-    dynverSonatypeSnapshots := false,
+    dynverCurrentDate              := new Date,
+    dynverInstance                 := DynVer(Some((baseDirectory in ThisBuild).value)),
+    dynverGitDescribeOutput        := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
+    dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
 
     dynver                  := dynverInstance.value.version(new Date),
@@ -83,15 +83,13 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
   }
 }
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
-  def version: String            = {
+  def version: String = {
     if (isCleanAfterTag) ref.dropV.value + dirtySuffix.value // no commit info if clean after tag
     else if (commitSuffix.sha.nonEmpty) ref.dropV.value + "+" + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix.value
     else commitSuffix.distance + "-" + ref.value + dirtySuffix.value
   }
 
-  def sonatypeVersion: String =
-    if(isSnapshot()) version + "-SNAPSHOT"
-    else version
+  def sonatypeVersion: String    = if (isSnapshot) version + "-SNAPSHOT" else version
 
   def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty || isDirty()
   def previousVersion: String    = ref.dropV.value
@@ -166,9 +164,9 @@ sealed case class DynVer(wd: Option[File]) {
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
       .flatMap(output =>
-        if (output.hasNoTags) getDistanceToFirstCommit().map(dist => {
+        if (output.hasNoTags) getDistanceToFirstCommit().map(dist =>
           output.copy(commitSuffix = output.commitSuffix.copy(distance = dist))
-        })
+        )
         else Some(output)
       )
   }
@@ -193,6 +191,7 @@ sealed case class DynVer(wd: Option[File]) {
       .filter(_.trim.nonEmpty)
   }
 }
+
 object DynVer extends DynVer(None) with (Option[File] => DynVer)
 
 object `package`
