@@ -178,9 +178,8 @@ sealed case class DynVer(wd: Option[File]) {
       parentHash <- execAndHandleEmptyOutput("git --no-pager log --pretty=%H -n 1 HEAD^1")
       // Find the closest tag of the parent commit
       tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --always $parentHash")
-    } yield {
-      GitDescribeOutput.parse(tag)
-    }
+      out <- PartialFunction.condOpt(tag)(GitDescribeOutput.parse)
+    } yield out
   }
 
   def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
