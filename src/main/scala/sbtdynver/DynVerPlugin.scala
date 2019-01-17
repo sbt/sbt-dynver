@@ -102,7 +102,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
-  private val Tag          =  """(v[0-9][^+]*)""".r
+  private val Tag          =  """(v[0-9][^+]*?)""".r
   private val Distance     =  """\+([0-9]+)""".r
   private val Sha          =  """([0-9a-f]{8})""".r
   private val CommitSuffix = s"""($Distance-$Sha)""".r
