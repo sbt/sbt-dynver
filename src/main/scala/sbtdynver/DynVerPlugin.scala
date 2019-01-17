@@ -2,6 +2,7 @@ package sbtdynver
 
 import java.util._
 
+import scala.{ PartialFunction => ?=> }
 import scala.util._
 
 import sbt._
@@ -102,17 +103,19 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
+  private val OptWs        =  """[\s\n]*""" // doesn't \s include \n? why can't this call .r?
   private val Tag          =  """(v[0-9][^+]*?)""".r
   private val Distance     =  """\+([0-9]+)""".r
   private val Sha          =  """([0-9a-f]{8})""".r
+  private val HEAD         =  """HEAD""".r
   private val CommitSuffix = s"""($Distance-$Sha)""".r
   private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
 
-  private val FromTag  = s"""^$Tag$CommitSuffix?$TstampSuffix?$$""".r
-  private val FromSha  = s"""^$Sha$TstampSuffix?$$""".r
-  private val FromHead = s"""^HEAD$TstampSuffix$$""".r
+  private val FromTag  = s"""^$OptWs$Tag$CommitSuffix?$TstampSuffix?$OptWs$$""".r
+  private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
+  private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
 
-  private[sbtdynver] def parse(s: String): GitDescribeOutput = s.trim match {
+  private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
     case FromTag(tag, _, dist, sha, dirty) => parse0(   tag, dist, sha, dirty)
     case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty)
     case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty)
