@@ -3,8 +3,9 @@ package sbtdynver
 import java.util._
 
 import scala.util._
+
 import sbt._
-import Keys._
+import sbt.Keys._
 
 import scala.sys.process.{ Process, ProcessLogger }
 
