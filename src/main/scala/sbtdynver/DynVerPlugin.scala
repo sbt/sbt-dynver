@@ -193,7 +193,7 @@ object DynVer extends DynVer(None) with (Option[File] => DynVer)
 object `package`
 
 package impl {
-  object NoProcessLogger extends scala.sys.process.ProcessLogger {
+  object NoProcessLogger extends ProcessLogger {
     def info(s: => String)  = ()
     def out(s: => String)   = ()
     def error(s: => String) = ()
