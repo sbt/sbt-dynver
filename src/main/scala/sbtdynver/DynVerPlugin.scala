@@ -2,25 +2,27 @@ package sbtdynver
 
 import java.util._
 
+import scala.{ PartialFunction => ?=> }
 import scala.util._
-import sbt._
-import Keys._
 
-import scala.sys.process.ProcessLogger
+import sbt._
+import sbt.Keys._
+
+import scala.sys.process.{ Process, ProcessLogger }
 
 object DynVerPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger  = allRequirements
 
   object autoImport {
-    val dynver                  = taskKey[String]("The version of your project, from git")
-    val dynverInstance          = settingKey[DynVer]("The dynver instance for this build")
-    val dynverCurrentDate       = settingKey[Date]("The current date, for dynver purposes")
-    val dynverGitDescribeOutput = settingKey[Option[GitDescribeOutput]]("The output from git describe")
-    val dynverSonatypeSnapshots = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
+    val dynver                         = taskKey[String]("The version of your project, from git")
+    val dynverInstance                 = settingKey[DynVer]("The dynver instance for this build")
+    val dynverCurrentDate              = settingKey[Date]("The current date, for dynver purposes")
+    val dynverGitDescribeOutput        = settingKey[Option[GitDescribeOutput]]("The output from git describe")
+    val dynverSonatypeSnapshots        = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
     val dynverGitPreviousStableVersion = settingKey[Option[GitDescribeOutput]]("The last stable tag")
-    val dynverCheckVersion      = taskKey[Boolean]("Checks if version and dynver match")
-    val dynverAssertVersion     = taskKey[Unit]("Asserts if version and dynver match")
+    val dynverCheckVersion             = taskKey[Boolean]("Checks if version and dynver match")
+    val dynverAssertVersion            = taskKey[Unit]("Asserts if version and dynver match")
 
     // Would be nice if this were an 'upstream' key
     val isVersionStable         = settingKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
@@ -32,17 +34,17 @@ object DynVerPlugin extends AutoPlugin {
     version := {
       val out = dynverGitDescribeOutput.value
       val date = dynverCurrentDate.value
-      if(dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
+      if (dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
       else out.version(date)
     },
     isSnapshot              := dynverGitDescribeOutput.value.isSnapshot,
     isVersionStable         := dynverGitDescribeOutput.value.isVersionStable,
     previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
-    dynverCurrentDate       := new Date,
-    dynverInstance          := DynVer(Some((Keys.baseDirectory in ThisBuild).value)),
-    dynverGitDescribeOutput := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
-    dynverSonatypeSnapshots := false,
+    dynverCurrentDate              := new Date,
+    dynverInstance                 := DynVer(Some((baseDirectory in ThisBuild).value)),
+    dynverGitDescribeOutput        := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
+    dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
 
     dynver                  := dynverInstance.value.version(new Date),
@@ -83,15 +85,13 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
   }
 }
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
-  def version: String            = {
+  def version: String = {
     if (isCleanAfterTag) ref.dropV.value + dirtySuffix.value // no commit info if clean after tag
     else if (commitSuffix.sha.nonEmpty) ref.dropV.value + "+" + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix.value
     else commitSuffix.distance + "-" + ref.value + dirtySuffix.value
   }
 
-  def sonatypeVersion: String =
-    if(isSnapshot()) version + "-SNAPSHOT"
-    else version
+  def sonatypeVersion: String    = if (isSnapshot) version + "-SNAPSHOT" else version
 
   def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty || isDirty()
   def previousVersion: String    = ref.dropV.value
@@ -103,17 +103,19 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
-  private val Tag          =  """(v[0-9][^+]*)""".r
+  private val OptWs        =  """[\s\n]*""" // doesn't \s include \n? why can't this call .r?
+  private val Tag          =  """(v[0-9][^+]*?)""".r
   private val Distance     =  """\+([0-9]+)""".r
   private val Sha          =  """([0-9a-f]{8})""".r
+  private val HEAD         =  """HEAD""".r
   private val CommitSuffix = s"""($Distance-$Sha)""".r
   private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
 
-  private val FromTag  = s"""^$Tag$CommitSuffix?$TstampSuffix?$$""".r
-  private val FromSha  = s"""^$Sha$TstampSuffix?$$""".r
-  private val FromHead = s"""^HEAD$TstampSuffix$$""".r
+  private val FromTag  = s"""^$OptWs$Tag$CommitSuffix?$TstampSuffix?$OptWs$$""".r
+  private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
+  private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
 
-  private[sbtdynver] def parse(s: String): GitDescribeOutput = s.trim match {
+  private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
     case FromTag(tag, _, dist, sha, dirty) => parse0(   tag, dist, sha, dirty)
     case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty)
     case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty)
@@ -130,9 +132,8 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     def version(d: Date): String          = mkVersion(_.version, DynVer fallback d)
     def sonatypeVersion(d: Date): String  = mkVersion(_.sonatypeVersion, DynVer fallback d)
     def previousVersion: Option[String]   = _x.map(_.previousVersion)
-    def isSnapshot: Boolean               = _x.map(_.isSnapshot).getOrElse(true)
-    def isVersionStable: Boolean          = _x.map(_.isVersionStable).getOrElse(false)
-
+    def isSnapshot: Boolean               = _x.forall(_.isSnapshot)
+    def isVersionStable: Boolean          = _x.exists(_.isVersionStable)
 
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
     def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
@@ -141,9 +142,6 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File]) {
-
-  private val errLogger = ProcessLogger(stdOut => (), stdErr => println(stdErr))
-
   def version(d: Date): String            = getGitDescribeOutput(d) version d
   def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d) sonatypeVersion d
   def previousVersion : Option[String]    = getGitPreviousStableTag.previousVersion
@@ -154,51 +152,51 @@ sealed case class DynVer(wd: Option[File]) {
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
-  def getDistanceToFirstCommit() = {
-    val process = scala.sys.process.Process(s"git rev-list --count HEAD", wd)
+  def getDistanceToFirstCommit(): Option[Int] = {
+    val process = Process(s"git rev-list --count HEAD", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.trim.toInt)
   }
 
-  def getGitDescribeOutput(d: Date) = {
-    val process = scala.sys.process.Process(s"""git describe --long --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}""", wd)
+  def getGitDescribeOutput(d: Date): Option[GitDescribeOutput] = {
+    val process = Process(s"git describe --long --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
       .flatMap(output =>
-        if (output.hasNoTags) getDistanceToFirstCommit().map(dist => {
+        if (output.hasNoTags) getDistanceToFirstCommit().map(dist =>
           output.copy(commitSuffix = output.commitSuffix.copy(distance = dist))
-        })
+        )
         else Some(output)
       )
   }
 
   def getGitPreviousStableTag: Option[GitDescribeOutput] = {
-    (for {
+    for {
       // Find the parent of the current commit. The "^1" instructs it to show only the first parent,
       // as merge commits can have multiple parents
-      parentHash <- execAndHandleEmptyOuptut(s"git --no-pager log --pretty=%H -n 1 HEAD^1")
+      parentHash <- execAndHandleEmptyOutput("git --no-pager log --pretty=%H -n 1 HEAD^1")
       // Find the closest tag of the parent commit
-      tag <- execAndHandleEmptyOuptut(s"git describe --tags --abbrev=0 --always $parentHash")
-    } yield {
-      GitDescribeOutput.parse(tag)
-    }).toOption
+      tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --always $parentHash")
+      out <- PartialFunction.condOpt(tag)(GitDescribeOutput.parse)
+    } yield out
   }
 
   def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
   def fallback(d: Date): String = s"HEAD+${timestamp(d)}"
 
-  private def execAndHandleEmptyOuptut(cmd: String): Try[String] = {
-    Try(scala.sys.process.Process(cmd, wd) !! errLogger)
+  private def execAndHandleEmptyOutput(cmd: String): Option[String] = {
+    Try(Process(cmd, wd) !! impl.NoProcessLogger).toOption
       .filter(_.trim.nonEmpty)
   }
 }
+
 object DynVer extends DynVer(None) with (Option[File] => DynVer)
 
 object `package`
 
 package impl {
-  object NoProcessLogger extends scala.sys.process.ProcessLogger {
+  object NoProcessLogger extends ProcessLogger {
     def info(s: => String)  = ()
     def out(s: => String)   = ()
     def error(s: => String) = ()
