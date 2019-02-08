@@ -154,6 +154,15 @@ This will return an error message like the following:
 
 * `git`, on the `PATH`
 
+## FAQ
+
+### How do I make previousStableVersion return None for major version branches?
+
+Deciding whether going from one version to another is a "breaking change" is out of scope for this project. 
+If you have binary compatibility check setup using `previousStableVersion` in CI
+and want to skip the check for major version branches (e.g. `1.x` vs `2.x`), see https://github.com/dwijnand/sbt-dynver/issues/70#issuecomment-458620722 
+for the recommended solution.
+
 ## Licence
 
 Copyright 2016-2017 Dale Wijnand
