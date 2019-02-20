@@ -1,10 +1,12 @@
-# [sbt-dynver][] [![travis-badge][]][travis] [![gitter-badge][]][gitter]
+# [sbt-dynver][] [![travis-badge][]][travis] [![gitter-badge][]][gitter] [![release-badge][]][release]
 
-[sbt-dynver]:         https://github.com/dwijnand/sbt-dynver
-[travis]:          https://travis-ci.org/dwijnand/sbt-dynver
-[travis-badge]:    https://travis-ci.org/dwijnand/sbt-dynver.svg?branch=master
-[gitter]:              https://gitter.im/dwijnand/sbt-dynver
-[gitter-badge]: https://badges.gitter.im/dwijnand/sbt-dynver.svg
+[sbt-dynver]:                       https://github.com/dwijnand/sbt-dynver
+[travis]:                        https://travis-ci.org/dwijnand/sbt-dynver
+[travis-badge]:                  https://travis-ci.org/dwijnand/sbt-dynver.svg?branch=master
+[gitter]:                            https://gitter.im/dwijnand/sbt-dynver
+[gitter-badge]:               https://badges.gitter.im/dwijnand/sbt-dynver.svg
+[release]:                          https://github.com/dwijnand/sbt-dynver/releases/latest
+[release-badge]: https://img.shields.io/github/release/dwijnand/sbt-dynver.svg
 
 `sbt-dynver` is an [sbt](http://www.scala-sbt.org/) plugin to dynamically set your version from git.
 
@@ -24,7 +26,9 @@ Features:
 
 Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/dynver.sbt`:
 
-    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.1.0")
+    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "x.y.z")
+
+The latest release is: [![release-badge][]][release]
 
 Then make sure to **NOT set the version setting**, otherwise you will override `sbt-dynver`.
 
