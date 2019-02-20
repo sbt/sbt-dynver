@@ -48,7 +48,11 @@ object DynVerPlugin extends AutoPlugin {
     dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
 
-    dynver                  := dynverInstance.value.version(new Date),
+    dynver                  := {
+      val dynver = dynverInstance.value
+      if (dynverSonatypeSnapshots.value) dynver.sonatypeVersion(new Date)
+      else dynver.version(new Date)
+    },
     dynverCheckVersion      := (dynver.value == version.value),
     dynverAssertVersion     := {
       val v = version.value
