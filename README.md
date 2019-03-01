@@ -97,20 +97,19 @@ If you're publishing to Sonatype sonashots then enable `dynverSonatypeSnapshots 
 changes).  This opt-in exists because the Sonatype's snapshots repository requires all versions to end with
 `-SNAPSHOT`.
 
+## Docker compatible version strings
+
+The default version string format includes `+` characters, which is not compatible with docker tags. This character can be overridden by setting:
+
+```scala
+dynverSeparator in ThisBuild := "-"
+```
+
 ## Custom version string
 
 Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
 
-As an example, Docker rejects tags which include `+`'s ([#5](https://github.com/dwijnand/sbt-dynver/issues/5)).
-
-A simply way to solve this is to simply post-process the value of `version in ThisBuild` (and optionally `dynver in ThisBuild`), for example by replacing '+' with '-':
-
-```scala
-version in ThisBuild ~= (_.replace('+', '-'))
- dynver in ThisBuild ~= (_.replace('+', '-'))
-```
-
-If instead you want to completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
+To completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
 
 ```scala
 def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
