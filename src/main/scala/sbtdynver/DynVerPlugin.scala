@@ -75,9 +75,7 @@ object DynVerPlugin extends AutoPlugin {
 
 final case class GitRef(value: String)
 final case class GitCommitSuffix(distance: Int, sha: String)
-final case class GitDirtySuffix(suffix: String) {
-  def value: String = if (suffix.isEmpty) "" else s"+$suffix"
-}
+final case class GitDirtySuffix(value: String)
 
 object GitRef extends (String => GitRef) {
   final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
@@ -96,22 +94,22 @@ object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
 }
 
 object GitDirtySuffix extends (String => GitDirtySuffix) {
-  final implicit class GitDirtySuffixOps(val x: GitDirtySuffix) extends AnyVal {
-    def dropPlus: GitDirtySuffix = x
-    def mkString(prefix: String, suffix: String): String = if (x.suffix.isEmpty) "" else prefix + x.suffix + suffix
-    def asSuffix(separator: String): String = mkString(separator, "")
+  final implicit class GitDirtySuffixOps(val x: GitDirtySuffix) extends AnyVal { import x._
+    def dropPlus: GitDirtySuffix = GitDirtySuffix(value.replaceAll("^\\+", ""))
+    def withSeparator(separator: String): String = dropPlus.mkString(separator, "")
+    def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
   }
 }
 
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
-  def version(separator: String): String = {
-    val ds = dirtySuffix.asSuffix(separator)
-    if (isCleanAfterTag) ref.dropV.value + ds // no commit info if clean after tag
-    else if (commitSuffix.sha.nonEmpty) ref.dropV.value + separator + commitSuffix.distance + "-" + commitSuffix.sha + ds
-    else commitSuffix.distance + "-" + ref.value + ds
+  def version(sep: String): String = {
+    val dirtySuffix = this.dirtySuffix.withSeparator(sep)
+    if (isCleanAfterTag) ref.dropV.value + dirtySuffix // no commit info if clean after tag
+    else if (commitSuffix.sha.nonEmpty) ref.dropV.value + sep + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix
+    else commitSuffix.distance + "-" + ref.value + dirtySuffix
   }
-  def sonatypeVersion(separator: String): String =
-    if (isSnapshot) version(separator) + "-SNAPSHOT" else version(separator)
+
+  def sonatypeVersion(sep: String): String = if (isSnapshot) version(sep) + "-SNAPSHOT" else version(sep)
 
   def version: String            = version(DynVer.separator)
   def sonatypeVersion: String    = sonatypeVersion(DynVer.separator)
@@ -121,7 +119,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
   def isVersionStable(): Boolean = !isDirty()
 
   def hasNoTags(): Boolean       = !ref.isTag
-  def isDirty(): Boolean         = dirtySuffix.suffix.nonEmpty
+  def isDirty(): Boolean         = dirtySuffix.value.nonEmpty
   def isCleanAfterTag: Boolean   = ref.isTag && commitSuffix.isEmpty && !isDirty()
 }
 
@@ -132,7 +130,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   private val Sha          =  """([0-9a-f]{8})""".r
   private val HEAD         =  """HEAD""".r
   private val CommitSuffix = s"""($Distance-$Sha)""".r
-  private val TstampSuffix =  """(?:\+([0-9]{8}-[0-9]{4}))""".r
+  private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
 
   private val FromTag  = s"""^$OptWs$Tag$CommitSuffix?$TstampSuffix?$OptWs$$""".r
   private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
@@ -152,13 +150,12 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
-    def version(d: Date, separator: String): String =
-      mkVersion(_.version(separator), DynVer(None, separator) fallback d)
-    def sonatypeVersion(d: Date, separator: String): String  =
-      mkVersion(_.sonatypeVersion(separator), DynVer(None, separator) fallback d)
-
     def version(d: Date): String          = version(d, DynVer.separator)
     def sonatypeVersion(d: Date): String  = sonatypeVersion(d, DynVer.separator)
+
+    def version(d: Date, sep: String): String         = mkVersion(_.version(sep), fallback(sep, d))
+    def sonatypeVersion(d: Date, sep: String): String = mkVersion(_.sonatypeVersion(sep), fallback(sep, d))
+
     def previousVersion: Option[String]   = _x.map(_.previousVersion)
     def isSnapshot: Boolean               = _x.forall(_.isSnapshot)
     def isVersionStable: Boolean          = _x.exists(_.isVersionStable)
@@ -222,10 +219,7 @@ sealed case class DynVer(wd: Option[File], separator: String) {
   }
 }
 
-object DynVer extends DynVer(None, "+")
-    with ((Option[File], String) => DynVer)
-    with (Option[File] => DynVer)
-{
+object DynVer extends DynVer(None, "+") with (Option[File] => DynVer) {
   override def apply(wd: Option[File]) = apply(wd, separator)
 }
 
