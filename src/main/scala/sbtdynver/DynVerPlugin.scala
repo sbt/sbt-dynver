@@ -49,7 +49,7 @@ object DynVerPlugin extends AutoPlugin {
     dynverGitDescribeOutput        := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
     dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
-    dynverSeparator        := DynVer.separator,
+    dynverSeparator                := DynVer.separator,
 
     dynver                  := {
       val dynver = dynverInstance.value
@@ -102,8 +102,8 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
     def asSuffix(separator: String): String = mkString(separator, "")
   }
 }
-final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
 
+final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version(separator: String): String = {
     val ds = dirtySuffix.asSuffix(separator)
     if (isCleanAfterTag) ref.dropV.value + ds // no commit info if clean after tag
@@ -166,6 +166,9 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
     def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
   }
+
+  private[sbtdynver] def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
+  private[sbtdynver] def fallback(separator: String, d: Date) = s"HEAD$separator${timestamp(d)}"
 }
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
@@ -210,8 +213,8 @@ sealed case class DynVer(wd: Option[File], separator: String) {
     } yield out
   }
 
-  def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
-  def fallback(d: Date): String = s"HEAD$separator${timestamp(d)}"
+  def timestamp(d: Date): String = GitDescribeOutput.timestamp(d)
+  def fallback(d: Date): String = GitDescribeOutput.fallback(separator, d)
 
   private def execAndHandleEmptyOutput(cmd: String): Option[String] = {
     Try(Process(cmd, wd) !! impl.NoProcessLogger).toOption
@@ -220,8 +223,9 @@ sealed case class DynVer(wd: Option[File], separator: String) {
 }
 
 object DynVer extends DynVer(None, "+")
-  with ((Option[File], String) => DynVer)
-  with (Option[File] => DynVer) {
+    with ((Option[File], String) => DynVer)
+    with (Option[File] => DynVer)
+{
   override def apply(wd: Option[File]) = apply(wd, separator)
 }
 

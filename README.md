@@ -97,7 +97,7 @@ If you're publishing to Sonatype sonashots then enable `dynverSonatypeSnapshots 
 changes).  This opt-in exists because the Sonatype's snapshots repository requires all versions to end with
 `-SNAPSHOT`.
 
-## Docker compatible version strings
+## Docker-compatible version strings
 
 The default version string format includes `+` characters, which is not compatible with docker tags. This character can be overridden by setting:
 
