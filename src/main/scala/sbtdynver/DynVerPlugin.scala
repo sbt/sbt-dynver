@@ -21,6 +21,7 @@ object DynVerPlugin extends AutoPlugin {
     val dynverGitDescribeOutput        = settingKey[Option[GitDescribeOutput]]("The output from git describe")
     val dynverSonatypeSnapshots        = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
     val dynverGitPreviousStableVersion = settingKey[Option[GitDescribeOutput]]("The last stable tag")
+    val dynverSeparator                = settingKey[String]("The separator to use between tag and distance, and the hash and dirty timestamp")
     val dynverCheckVersion             = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion            = taskKey[Unit]("Asserts if version and dynver match")
     val dynverAssertTagVersion         = taskKey[Unit]("Asserts if the version derives from git tags")
@@ -35,18 +36,20 @@ object DynVerPlugin extends AutoPlugin {
     version := {
       val out = dynverGitDescribeOutput.value
       val date = dynverCurrentDate.value
-      if (dynverSonatypeSnapshots.value) out.sonatypeVersion(date)
-      else out.version(date)
+      val separator = dynverSeparator.value
+      if (dynverSonatypeSnapshots.value) out.sonatypeVersionWithSep(date, separator)
+      else out.versionWithSep(date, separator)
     },
     isSnapshot              := dynverGitDescribeOutput.value.isSnapshot,
     isVersionStable         := dynverGitDescribeOutput.value.isVersionStable,
     previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
     dynverCurrentDate              := new Date,
-    dynverInstance                 := DynVer(Some((baseDirectory in ThisBuild).value)),
+    dynverInstance                 := DynVer(Some((baseDirectory in ThisBuild).value), dynverSeparator.value),
     dynverGitDescribeOutput        := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
     dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
+    dynverSeparator                := DynVer.separator,
 
     dynver                  := {
       val dynver = dynverInstance.value
@@ -93,17 +96,23 @@ object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
 object GitDirtySuffix extends (String => GitDirtySuffix) {
   final implicit class GitDirtySuffixOps(val x: GitDirtySuffix) extends AnyVal { import x._
     def dropPlus: GitDirtySuffix = GitDirtySuffix(value.replaceAll("^\\+", ""))
+    def withSeparator(separator: String): String = dropPlus.mkString(separator, "")
     def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
   }
 }
+
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
-  def version: String = {
-    if (isCleanAfterTag) ref.dropV.value + dirtySuffix.value // no commit info if clean after tag
-    else if (commitSuffix.sha.nonEmpty) ref.dropV.value + "+" + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix.value
-    else commitSuffix.distance + "-" + ref.value + dirtySuffix.value
+  def version(sep: String): String = {
+    val dirtySuffix = this.dirtySuffix.withSeparator(sep)
+    if (isCleanAfterTag) ref.dropV.value + dirtySuffix // no commit info if clean after tag
+    else if (commitSuffix.sha.nonEmpty) ref.dropV.value + sep + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix
+    else commitSuffix.distance + "-" + ref.value + dirtySuffix
   }
 
-  def sonatypeVersion: String    = if (isSnapshot) version + "-SNAPSHOT" else version
+  def sonatypeVersion(sep: String): String = if (isSnapshot) version(sep) + "-SNAPSHOT" else version(sep)
+
+  def version: String            = version(DynVer.separator)
+  def sonatypeVersion: String    = sonatypeVersion(DynVer.separator)
 
   def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty || isDirty()
   def previousVersion: String    = ref.dropV.value
@@ -141,8 +150,13 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
-    def version(d: Date): String          = mkVersion(_.version, DynVer fallback d)
-    def sonatypeVersion(d: Date): String  = mkVersion(_.sonatypeVersion, DynVer fallback d)
+    def version(d: Date): String          = versionWithSep(d, DynVer.separator)
+    def sonatypeVersion(d: Date): String  = sonatypeVersionWithSep(d, DynVer.separator)
+
+    // overloading isn't bincompat :O
+    def versionWithSep(d: Date, sep: String): String         = mkVersion(_.version(sep), fallback(sep, d))
+    def sonatypeVersionWithSep(d: Date, sep: String): String = mkVersion(_.sonatypeVersion(sep), fallback(sep, d))
+
     def previousVersion: Option[String]   = _x.map(_.previousVersion)
     def isSnapshot: Boolean               = _x.forall(_.isSnapshot)
     def isVersionStable: Boolean          = _x.exists(_.isVersionStable)
@@ -150,17 +164,22 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     def isDirty: Boolean         = _x.fold(true)(_.isDirty())
     def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
   }
+
+  private[sbtdynver] def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
+  private[sbtdynver] def fallback(separator: String, d: Date) = s"HEAD$separator${timestamp(d)}"
 }
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
-sealed case class DynVer(wd: Option[File]) {
-  def version(d: Date): String            = getGitDescribeOutput(d) version d
-  def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d) sonatypeVersion d
+sealed case class DynVer(wd: Option[File], separator: String) {
+  private def this(wd: Option[File]) = this(wd, "+")
+
+  def version(d: Date): String            = getGitDescribeOutput(d).versionWithSep(d, separator)
+  def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d).sonatypeVersionWithSep(d, separator)
   def previousVersion : Option[String]    = getGitPreviousStableTag.previousVersion
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
   def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
 
-  def makeDynVer(d: Date): Option[String] = getGitDescribeOutput(d) map (_.version)
+  def makeDynVer(d: Date): Option[String] = getGitDescribeOutput(d) map (_.version(separator))
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
@@ -194,16 +213,20 @@ sealed case class DynVer(wd: Option[File]) {
     } yield out
   }
 
-  def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
-  def fallback(d: Date): String = s"HEAD+${timestamp(d)}"
+  def timestamp(d: Date): String = GitDescribeOutput.timestamp(d)
+  def fallback(d: Date): String = GitDescribeOutput.fallback(separator, d)
 
   private def execAndHandleEmptyOutput(cmd: String): Option[String] = {
     Try(Process(cmd, wd) !! impl.NoProcessLogger).toOption
       .filter(_.trim.nonEmpty)
   }
+
+  def copy(wd: Option[File] = wd): DynVer = new DynVer(wd, separator)
 }
 
-object DynVer extends DynVer(None) with (Option[File] => DynVer)
+object DynVer extends DynVer(None) with (Option[File] => DynVer) {
+  override def apply(wd: Option[File]) = apply(wd, separator)
+}
 
 object `package`
 
