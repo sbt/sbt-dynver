@@ -109,6 +109,13 @@ dynverSeparator in ThisBuild := "-"
 
 Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
 
+For simple cases you can customise a versiou by simply post-processing the value of `version in ThisBuild` (and optionally `dynver in ThisBuild`), for example by replacing '+' with '-' (emulating the docker support mentioned above):
+
+```scala
+version in ThisBuild ~= (_.replace('+', '-'))
+ dynver in ThisBuild ~= (_.replace('+', '-'))
+```
+
 To completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
 
 ```scala
