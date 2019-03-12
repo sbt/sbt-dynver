@@ -37,8 +37,8 @@ object DynVerPlugin extends AutoPlugin {
       val out = dynverGitDescribeOutput.value
       val date = dynverCurrentDate.value
       val separator = dynverSeparator.value
-      if (dynverSonatypeSnapshots.value) out.sonatypeVersion(date, separator)
-      else out.version(date, separator)
+      if (dynverSonatypeSnapshots.value) out.sonatypeVersionWithSep(date, separator)
+      else out.versionWithSep(date, separator)
     },
     isSnapshot              := dynverGitDescribeOutput.value.isSnapshot,
     isVersionStable         := dynverGitDescribeOutput.value.isVersionStable,
@@ -150,11 +150,12 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
-    def version(d: Date): String          = version(d, DynVer.separator)
-    def sonatypeVersion(d: Date): String  = sonatypeVersion(d, DynVer.separator)
+    def version(d: Date): String          = versionWithSep(d, DynVer.separator)
+    def sonatypeVersion(d: Date): String  = sonatypeVersionWithSep(d, DynVer.separator)
 
-    def version(d: Date, sep: String): String         = mkVersion(_.version(sep), fallback(sep, d))
-    def sonatypeVersion(d: Date, sep: String): String = mkVersion(_.sonatypeVersion(sep), fallback(sep, d))
+    // overloading isn't bincompat :O
+    def versionWithSep(d: Date, sep: String): String         = mkVersion(_.version(sep), fallback(sep, d))
+    def sonatypeVersionWithSep(d: Date, sep: String): String = mkVersion(_.sonatypeVersion(sep), fallback(sep, d))
 
     def previousVersion: Option[String]   = _x.map(_.previousVersion)
     def isSnapshot: Boolean               = _x.forall(_.isSnapshot)
@@ -170,8 +171,10 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File], separator: String) {
-  def version(d: Date): String            = getGitDescribeOutput(d).version(d, separator)
-  def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d).sonatypeVersion(d, separator)
+  private def this(wd: Option[File]) = this(wd, "+")
+
+  def version(d: Date): String            = getGitDescribeOutput(d).versionWithSep(d, separator)
+  def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d).sonatypeVersionWithSep(d, separator)
   def previousVersion : Option[String]    = getGitPreviousStableTag.previousVersion
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
   def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
@@ -217,9 +220,11 @@ sealed case class DynVer(wd: Option[File], separator: String) {
     Try(Process(cmd, wd) !! impl.NoProcessLogger).toOption
       .filter(_.trim.nonEmpty)
   }
+
+  def copy(wd: Option[File] = wd): DynVer = new DynVer(wd, separator)
 }
 
-object DynVer extends DynVer(None, "+") with (Option[File] => DynVer) {
+object DynVer extends DynVer(None) with (Option[File] => DynVer) {
   override def apply(wd: Option[File]) = apply(wd, separator)
 }
 
