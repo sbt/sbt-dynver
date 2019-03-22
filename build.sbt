@@ -32,7 +32,7 @@ scalacOptions  += "-Ywarn-dead-code"
 scalacOptions  += "-Ywarn-numeric-widen"
 scalacOptions  += "-Ywarn-value-discard"
 
-libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "4.4.1.201607150455-r" % Test
+libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "4.11.7.201903122105-r" % Test
 libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.13.5"               % Test
 
              fork in Test := false
