@@ -106,7 +106,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
     val dirtySuffix = this.dirtySuffix.withSeparator(sep)
     if (isCleanAfterTag) ref.dropV.value + dirtySuffix // no commit info if clean after tag
     else if (commitSuffix.sha.nonEmpty) ref.dropV.value + sep + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix
-    else commitSuffix.distance + "-" + ref.value + dirtySuffix
+    else "0.0.0" + sep + commitSuffix.distance + "-" + ref.value + dirtySuffix
   }
 
   def sonatypeVersion(sep: String): String = if (isSnapshot) version(sep) + "-SNAPSHOT" else version(sep)
