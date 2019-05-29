@@ -90,6 +90,11 @@ object PreviousVersionSpec extends Properties("PreviousVersionSpec") {
 
     state.previousVersion() ?= Some("1.1.0")
   }
+
+  property("contains unrelated tags in-between version tags") = {
+    val state = onTag().commit().tag("unrelated").commit().tag("v2.0.0")
+    state.previousVersion() ?= Some("1.0.0")
+  }
 }
 
 object IsSnapshotSpec extends Properties("IsSnapshotSpec") {
