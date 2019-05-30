@@ -171,6 +171,8 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File], separator: String) {
+  import DynVer._
+
   private def this(wd: Option[File]) = this(wd, "+")
 
   def version(d: Date): String            = getGitDescribeOutput(d).versionWithSep(d, separator)
@@ -190,7 +192,7 @@ sealed case class DynVer(wd: Option[File], separator: String) {
   }
 
   def getGitDescribeOutput(d: Date): Option[GitDescribeOutput] = {
-    val process = Process(s"git describe --long --tags --abbrev=8 --match v[0-9]* --always --dirty=+${timestamp(d)}", wd)
+    val process = Process(s"git describe --long --tags --abbrev=8 --match $TagPattern --always --dirty=+${timestamp(d)}", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(GitDescribeOutput.parse)
@@ -208,7 +210,7 @@ sealed case class DynVer(wd: Option[File], separator: String) {
       // as merge commits can have multiple parents
       parentHash <- execAndHandleEmptyOutput("git --no-pager log --pretty=%H -n 1 HEAD^1")
       // Find the closest tag of the parent commit
-      tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --always $parentHash")
+      tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --match $TagPattern --always $parentHash")
       out <- PartialFunction.condOpt(tag)(GitDescribeOutput.parse)
     } yield out
   }
@@ -225,6 +227,7 @@ sealed case class DynVer(wd: Option[File], separator: String) {
 }
 
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
+  private val TagPattern = "v[0-9]*"
   override def apply(wd: Option[File]) = apply(wd, separator)
 }
 
