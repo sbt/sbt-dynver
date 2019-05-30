@@ -41,7 +41,7 @@ object RepoStates {
     def commit() = andThis {
       dirty()
       git.add().addFilepattern(".").call()
-      sha = git.commit().setMessage("1").call().abbreviate(8).name()
+      sha = git.commit().setMessage("1").setSign(false).call().abbreviate(8).name()
     }
 
     def branch(branchName: String) = andThis {
@@ -57,10 +57,11 @@ object RepoStates {
     def merge(branchName: String) = andThis {
       git.merge()
         .include(git.getRepository.findRef(branchName))
-        .setCommit(true)
+        .setCommit(false)
         .setFastForward(FastForwardMode.NO_FF)
         .setStrategy(MergeStrategy.OURS)
         .call()
+      commit()
       sha = getCurrentHeadSHA
     }
 
