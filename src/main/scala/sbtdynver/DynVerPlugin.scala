@@ -22,6 +22,7 @@ object DynVerPlugin extends AutoPlugin {
     val dynverSonatypeSnapshots        = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
     val dynverGitPreviousStableVersion = settingKey[Option[GitDescribeOutput]]("The last stable tag")
     val dynverSeparator                = settingKey[String]("The separator to use between tag and distance, and the hash and dirty timestamp")
+    val dynverVTagPrefix               = settingKey[Boolean]("Whether or not tags have a 'v' prefix")
     val dynverCheckVersion             = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion            = taskKey[Unit]("Asserts if version and dynver match")
     val dynverAssertTagVersion         = taskKey[Unit]("Asserts if the version derives from git tags")
@@ -45,11 +46,12 @@ object DynVerPlugin extends AutoPlugin {
     previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
     dynverCurrentDate              := new Date,
-    dynverInstance                 := DynVer(Some((baseDirectory in ThisBuild).value), dynverSeparator.value),
+    dynverInstance                 := DynVer(Some(buildBase.value), dynverSeparator.value, dynverVTagPrefix.value),
     dynverGitDescribeOutput        := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
     dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
     dynverSeparator                := DynVer.separator,
+    dynverVTagPrefix               := DynVer.vTagPrefix,
 
     dynver                  := {
       val dynver = dynverInstance.value
@@ -71,6 +73,8 @@ object DynVerPlugin extends AutoPlugin {
         )
     }
   )
+
+  private val buildBase = baseDirectory in ThisBuild
 }
 
 final case class GitRef(value: String)
@@ -125,26 +129,32 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
   private val OptWs        =  """[\s\n]*""" // doesn't \s include \n? why can't this call .r?
-  private val Tag          =  """(v[0-9][^+]*?)""".r
   private val Distance     =  """\+([0-9]+)""".r
   private val Sha          =  """([0-9a-f]{8})""".r
   private val HEAD         =  """HEAD""".r
   private val CommitSuffix = s"""($Distance-$Sha)""".r
   private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
 
-  private val FromTag  = s"""^$OptWs$Tag$CommitSuffix?$TstampSuffix?$OptWs$$""".r
-  private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
-  private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
+  private[sbtdynver] final class Parser(vTagPrefix: Boolean) {
+    private val Tag = (if (vTagPrefix) """(v[0-9][^+]*?)""" else """([0-9]+\.[^+]*?)""").r
 
-  private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
-    case FromTag(tag, _, dist, sha, dirty) => parse0(   tag, dist, sha, dirty)
-    case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty)
-    case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty)
-  }
+    private val FromTag  = s"""^$OptWs$Tag$CommitSuffix?$TstampSuffix?$OptWs$$""".r
+    private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
+    private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
 
-  private def parse0(ref: String, dist: String, sha: String, dirty: String) = {
-    val commit = if (dist == null || sha == null) GitCommitSuffix(0, "") else GitCommitSuffix(dist.toInt, sha)
-    GitDescribeOutput(GitRef(ref), commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
+    private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
+      case FromTag(tag, _, dist, sha, dirty) => parse0(v(tag), dist, sha, dirty)
+      case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty)
+      case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty)
+    }
+
+    // If tags aren't v-prefixed, add the v back, so the rest of dynver works (e.g. GitRef#isTag)
+    private def v(s: String) = if (vTagPrefix) s else s"v$s"
+
+    private def parse0(ref: String, dist: String, sha: String, dirty: String) = {
+      val commit = if (dist == null || sha == null) GitCommitSuffix(0, "") else GitCommitSuffix(dist.toInt, sha)
+      GitDescribeOutput(GitRef(ref), commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
+    }
   }
 
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
@@ -170,10 +180,12 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 }
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
-sealed case class DynVer(wd: Option[File], separator: String) {
-  import DynVer._
-
+sealed case class DynVer(wd: Option[File], separator: String, vTagPrefix: Boolean) {
+  private def this(wd: Option[File], separator: String) = this(wd, separator, true)
   private def this(wd: Option[File]) = this(wd, "+")
+
+  private val TagPattern = if (vTagPrefix) "v[0-9]*" else "[0-9]*"
+  private[sbtdynver] val parser = new GitDescribeOutput.Parser(vTagPrefix)
 
   def version(d: Date): String            = getGitDescribeOutput(d).versionWithSep(d, separator)
   def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d).sonatypeVersionWithSep(d, separator)
@@ -195,7 +207,7 @@ sealed case class DynVer(wd: Option[File], separator: String) {
     val process = Process(s"git describe --long --tags --abbrev=8 --match $TagPattern --always --dirty=+${timestamp(d)}", wd)
     Try(process !! impl.NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
-      .map(GitDescribeOutput.parse)
+      .map(parser.parse)
       .flatMap(output =>
         if (output.hasNoTags) getDistanceToFirstCommit().map(dist =>
           output.copy(commitSuffix = output.commitSuffix.copy(distance = dist))
@@ -211,7 +223,7 @@ sealed case class DynVer(wd: Option[File], separator: String) {
       parentHash <- execAndHandleEmptyOutput("git --no-pager log --pretty=%H -n 1 HEAD^1")
       // Find the closest tag of the parent commit
       tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --match $TagPattern --always $parentHash")
-      out <- PartialFunction.condOpt(tag)(GitDescribeOutput.parse)
+      out <- PartialFunction.condOpt(tag)(parser.parse)
     } yield out
   }
 
@@ -227,8 +239,7 @@ sealed case class DynVer(wd: Option[File], separator: String) {
 }
 
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
-  private val TagPattern = "v[0-9]*"
-  override def apply(wd: Option[File]) = apply(wd, separator)
+  override def apply(wd: Option[File]) = apply(wd, separator, vTagPrefix)
 }
 
 object `package`

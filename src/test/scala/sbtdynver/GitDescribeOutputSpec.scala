@@ -14,6 +14,6 @@ object GitDescribeOutputSpec extends Properties("GitDescribeOutputSpec") {
 
   def test(v: String, ref: String, dist: Int, sha: String, dirtySuffix: String) = {
     val out = GitDescribeOutput(GitRef(ref), GitCommitSuffix(dist, sha), GitDirtySuffix(dirtySuffix))
-    property(s"parses $v") = GitDescribeOutput.parse(v) ?= out
+    property(s"parses $v") = DynVer.parser.parse(v) ?= out
   }
 }
