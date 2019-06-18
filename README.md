@@ -41,16 +41,21 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 `version in ThisBuild`, `isSnapshot in ThisBuild` and `isVersionStable in ThisBuild` will be automatically set to:
 
 ```
-| Case                                                                 | version                        | isSnapshot | isVersionStable |
-| -------------------------------------------------------------------- | ------------------------------ | ---------- | --------------- |
-| when on tag v1.0.0, w/o local changes                                | 1.0.0                          | false      | true            |
-| when on tag v1.0.0 with local changes                                | 1.0.0+0-1234abcd+20140707-1030 | true       | false           |
-| when on tag v1.0.0 +3 commits, on commit 1234abcd, w/o local changes | 1.0.0+3-1234abcd               | true       | true            |
-| when on tag v1.0.0 +3 commits, on commit 1234abcd with local changes | 1.0.0+3-1234abcd+20140707-1030 | true       | false           |
-| when there are no tags, on commit 1234abcd, w/o local changes        | 0.0.0+3-1234abcd               | true       | true            |
-| when there are no tags, on commit 1234abcd with local changes        | 0.0.0+3-1234abcd+20140707-1030 | true       | false           |
-| when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       | false           |
+| tag    | dist | HEAD sha | dirty | version                        | isSnapshot | isVersionStable |
+| ------ | ---- | -------- | ----- | ------------------------------ | ---------- | --------------- |
+| v1.0.0 | 0    | -        | No    | 1.0.0                          | false      | true            |
+| v1.0.0 | 0    | -        | Yes   | 1.0.0+0-1234abcd+20140707-1030 | true       | false           |
+| v1.0.0 | 3    | 1234abcd | No    | 1.0.0+3-1234abcd               | true       | true            |
+| v1.0.0 | 3    | 1234abcd | Yes   | 1.0.0+3-1234abcd+20140707-1030 | true       | false           |
+| <none> | 0    | 1234abcd | No    | 0.0.0+3-1234abcd               | true       | true            |
+| <none> | 0    | 1234abcd | Yes   | 0.0.0+3-1234abcd+20140707-1030 | true       | false           |
+| <none> | 0    | <none>   | Y/N   | HEAD+20140707-1030             | true       | false           |
 ```
+
+Where:
+* `tag` means what is the latest tag (relative to HEAD)
+* `dist` means the distance of the HEAD commit from the tag
+* `dirty` refers to whether there are local changes in the git repo
 
 #### Previous Version Detection
 Given the following git history, here's what `previousStableVersion` returns when at each commit:
