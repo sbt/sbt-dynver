@@ -47,8 +47,8 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 | v1.0.0 | 0    | 1234abcd | Yes   | 1.0.0+0-1234abcd+20140707-1030 | true       | false           |
 | v1.0.0 | 3    | 1234abcd | No    | 1.0.0+3-1234abcd               | true       | true            |
 | v1.0.0 | 3    | 1234abcd | Yes   | 1.0.0+3-1234abcd+20140707-1030 | true       | false           |
-| <none> | 0    | 1234abcd | No    | 0.0.0+3-1234abcd               | true       | true            |
-| <none> | 0    | 1234abcd | Yes   | 0.0.0+3-1234abcd+20140707-1030 | true       | false           |
+| <none> | 3    | 1234abcd | No    | 0.0.0+3-1234abcd               | true       | true            |
+| <none> | 3    | 1234abcd | Yes   | 0.0.0+3-1234abcd+20140707-1030 | true       | false           |
 | no commits or no git repo at all | HEAD+20140707-1030             | true       | false           |
 ```
 
