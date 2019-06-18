@@ -58,7 +58,9 @@ Where:
 * `dirty` refers to whether there are local changes in the git repo
 
 #### Previous Version Detection
+
 Given the following git history, here's what `previousStableVersion` returns when at each commit:
+
 ```
 *   (tagged: v1.1.0)       --> Some("1.0.0")
 *   (untagged)             --> Some("1.0.0")
@@ -68,6 +70,7 @@ Given the following git history, here's what `previousStableVersion` returns whe
 *   (tagged: v1.0.0)       --> None
 *   (untagged)             --> None
 ```
+
 Previous version is detected by looking at the closest tag of the parent commit of HEAD.
 
 If the current commit has multiple parents, the first parent will be used. In git, the first parent
@@ -75,17 +78,21 @@ comes from the branch you merged into (e.g. `master` in `git checkout master && 
 
 To use this feature with the Migration Manager [MiMa](https://github.com/lightbend/migration-manager) sbt plugin, add
 
-```$scala
+```scala
 mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% name.value % _).toSet
 ```
 
 ## Tag Requirements
 
-In order to be recognized by sbt-dynver, tags must begin with the lowercase letter 'v' followed by a digit.
+In order to be recognized by sbt-dynver, by default tags must begin with the lowercase letter 'v' followed by a digit.
 
-If you're not seeing what you expect, then start with this:
+If you're not seeing what you expect, then either start with this:
 
     git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"
+
+or change the value of `dynverVTagPrefix in ThisBuild` to remove the requirement for the v-prefix:
+
+    dynverVTagPrefix in ThisBuild := false
 
 ## Tasks
 
