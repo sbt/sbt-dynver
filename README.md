@@ -41,19 +41,26 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 `version in ThisBuild`, `isSnapshot in ThisBuild` and `isVersionStable in ThisBuild` will be automatically set to:
 
 ```
-| Case                                                                 | version                        | isSnapshot | isVersionStable |
-| -------------------------------------------------------------------- | ------------------------------ | ---------- | --------------- |
-| when on tag v1.0.0, w/o local changes                                | 1.0.0                          | false      | true            |
-| when on tag v1.0.0 with local changes                                | 1.0.0+0-1234abcd+20140707-1030 | true       | false           |
-| when on tag v1.0.0 +3 commits, on commit 1234abcd, w/o local changes | 1.0.0+3-1234abcd               | true       | true            |
-| when on tag v1.0.0 +3 commits, on commit 1234abcd with local changes | 1.0.0+3-1234abcd+20140707-1030 | true       | false           |
-| when there are no tags, on commit 1234abcd, w/o local changes        | 0.0.0+3-1234abcd               | true       | true            |
-| when there are no tags, on commit 1234abcd with local changes        | 0.0.0+3-1234abcd+20140707-1030 | true       | false           |
-| when there are no commits, or the project isn't a git repo           | HEAD+20140707-1030             | true       | false           |
+| tag    | dist | HEAD sha | dirty | version                        | isSnapshot | isVersionStable |
+| ------ | ---- | -------- | ----- | ------------------------------ | ---------- | --------------- |
+| v1.0.0 | 0    | -        | No    | 1.0.0                          | false      | true            |
+| v1.0.0 | 0    | 1234abcd | Yes   | 1.0.0+0-1234abcd+20140707-1030 | true       | false           |
+| v1.0.0 | 3    | 1234abcd | No    | 1.0.0+3-1234abcd               | true       | true            |
+| v1.0.0 | 3    | 1234abcd | Yes   | 1.0.0+3-1234abcd+20140707-1030 | true       | false           |
+| <none> | 0    | 1234abcd | No    | 0.0.0+3-1234abcd               | true       | true            |
+| <none> | 0    | 1234abcd | Yes   | 0.0.0+3-1234abcd+20140707-1030 | true       | false           |
+| no commits or no git repo at all | HEAD+20140707-1030             | true       | false           |
 ```
 
+Where:
+* `tag` means what is the latest tag (relative to HEAD)
+* `dist` means the distance of the HEAD commit from the tag
+* `dirty` refers to whether there are local changes in the git repo
+
 #### Previous Version Detection
+
 Given the following git history, here's what `previousStableVersion` returns when at each commit:
+
 ```
 *   (tagged: v1.1.0)       --> Some("1.0.0")
 *   (untagged)             --> Some("1.0.0")
@@ -63,6 +70,7 @@ Given the following git history, here's what `previousStableVersion` returns whe
 *   (tagged: v1.0.0)       --> None
 *   (untagged)             --> None
 ```
+
 Previous version is detected by looking at the closest tag of the parent commit of HEAD.
 
 If the current commit has multiple parents, the first parent will be used. In git, the first parent
@@ -70,17 +78,21 @@ comes from the branch you merged into (e.g. `master` in `git checkout master && 
 
 To use this feature with the Migration Manager [MiMa](https://github.com/lightbend/migration-manager) sbt plugin, add
 
-```$scala
+```scala
 mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% name.value % _).toSet
 ```
 
 ## Tag Requirements
 
-In order to be recognized by sbt-dynver, tags must begin with the lowercase letter 'v' followed by a digit.
+In order to be recognized by sbt-dynver, by default tags must begin with the lowercase letter 'v' followed by a digit.
 
-If you're not seeing what you expect, then start with this:
+If you're not seeing what you expect, then either start with this:
 
     git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"
+
+or change the value of `dynverVTagPrefix in ThisBuild` to remove the requirement for the v-prefix:
+
+    dynverVTagPrefix in ThisBuild := false
 
 ## Tasks
 
