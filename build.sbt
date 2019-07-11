@@ -46,7 +46,7 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
   Defaults.sbtPluginExtra(m, (sbtBinaryVersion in pluginCrossBuild).value, (scalaBinaryVersion in update).value)
 )
 
-mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0").value)
+mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.0.0").value)
 
 import com.typesafe.tools.mima.core._, ProblemFilters._
 mimaBinaryIssueFilters ++= Seq(
