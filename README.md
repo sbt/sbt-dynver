@@ -32,7 +32,9 @@ The latest release is: [![release-badge][]][release]
 
 Then make sure to **NOT set the version setting**, otherwise you will override `sbt-dynver`.
 
-In CI, you may need to run `git fetch --tags` if the repo is cloned with `--no-tags`.
+In CI, you may need to run `git fetch --unshallow` (or, sometimes, `git fetch --depth=10000`), to avoid
+situations where a shallow clone will result in the last tag not being fetched.  Additionally `git fetch --tags`
+if the repo is cloned with `--no-tags`.
 
 Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 
