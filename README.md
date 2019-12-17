@@ -174,6 +174,20 @@ This will return an error message like the following:
 [error] Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: 3-d9489763
 ```
 
+Or, using sbt-dynver v1.1.0 to v4.0.0:
+
+```scala
+Global / onLoad := (Global / onLoad).value.andThen { s =>
+  val v = version.value
+  if (dynverGitDescribeOutput.value.hasNoTags)
+    throw new MessageOnlyException(
+      s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $v"
+    )
+  s
+}
+```
+
+
 ## Dependencies
 
 * `git`, on the `PATH`

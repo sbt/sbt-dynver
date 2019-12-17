@@ -25,7 +25,15 @@ object DynVerPlugin extends AutoPlugin {
     val dynverVTagPrefix               = settingKey[Boolean]("Whether or not tags have a 'v' prefix")
     val dynverCheckVersion             = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion            = taskKey[Unit]("Asserts if version and dynver match")
-    val dynverAssertTagVersion         = taskKey[Unit]("Asserts if the version derives from git tags")
+
+    // Asserts if the version derives from git tags
+    val dynverAssertTagVersion         = Def.setting {
+      val v = version.value
+      if (dynverGitDescribeOutput.value.hasNoTags)
+        throw new MessageOnlyException(
+          s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $v"
+        )
+    }
 
     // Would be nice if this were an 'upstream' key
     val isVersionStable         = settingKey[Boolean]("The version string identifies a specific point in version control, so artifacts built from this version can be safely cached")
@@ -64,13 +72,6 @@ object DynVerPlugin extends AutoPlugin {
       val dv = dynver.value
       if (!dynverCheckVersion.value)
         sys.error(s"Version and dynver mismatch - version: $v, dynver: $dv")
-    },
-    dynverAssertTagVersion  := {
-      val v = version.value
-      if (dynverGitDescribeOutput.value.hasNoTags)
-        throw new MessageOnlyException(
-          s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $v"
-        )
     }
   )
 
