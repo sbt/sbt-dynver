@@ -53,7 +53,9 @@ mimaBinaryIssueFilters ++= Seq(
   // Migrated from a task key to a setting key
   exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.isVersionStable"),
   // private[sbtdynver]
-  exclude[DirectMissingMethodProblem]("sbtdynver.GitDescribeOutput.parse")
+  exclude[DirectMissingMethodProblem]("sbtdynver.GitDescribeOutput.parse"),
+  // Migrated from a task key to an initialise
+  exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.dynverAssertTagVersion")
 )
 
 // TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
