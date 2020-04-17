@@ -38,9 +38,12 @@ if the repo is cloned with `--no-tags`.
 
 Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 
+### Multi-Project Builds
+generally add `dynverTagPrefix in ThisProject := name.value`
+
 ## Detail
 
-`version in ThisBuild`, `isSnapshot in ThisBuild` and `isVersionStable in ThisBuild` will be automatically set to:
+`version`, `isSnapshot` and `isVersionStable` will be automatically set to:
 
 ```
 | tag    | dist | HEAD sha | dirty | version                        | isSnapshot | isVersionStable |
@@ -92,9 +95,9 @@ If you're not seeing what you expect, then either start with this:
 
     git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"
 
-or change the value of `dynverVTagPrefix in ThisBuild` to remove the requirement for the v-prefix:
+or change the value of `dynverVTagPrefix in ThisProject` to remove the requirement for the v-prefix:
 
-    dynverVTagPrefix in ThisBuild := false
+    dynverVTagPrefix in ThisProject := false
 
 ## Tasks
 
@@ -106,7 +109,7 @@ or change the value of `dynverVTagPrefix in ThisBuild` to remove the requirement
 
 ## Publishing to Sonatype's snapshots repository (aka "Sonatype mode")
 
-If you're publishing to Sonatype sonashots then enable `dynverSonatypeSnapshots in ThisBuild := true` to append
+If you're publishing to Sonatype sonashots then enable `dynverSonatypeSnapshots in ThisProject := true` to append
 "-SNAPSHOT" to the version if `isSnapshot` is `true` (which it is unless building on a tag with no local
 changes).  This opt-in exists because the Sonatype's snapshots repository requires all versions to end with
 `-SNAPSHOT`.
@@ -116,18 +119,18 @@ changes).  This opt-in exists because the Sonatype's snapshots repository requir
 The default version string format includes `+` characters, which is not compatible with docker tags. This character can be overridden by setting:
 
 ```scala
-dynverSeparator in ThisBuild := "-"
+dynverSeparator := "-"
 ```
 
 ## Custom version string
 
 Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
 
-For simple cases you can customise a versiou by simply post-processing the value of `version in ThisBuild` (and optionally `dynver in ThisBuild`), for example by replacing '+' with '-' (emulating the docker support mentioned above):
+For simple cases you can customise a versiou by simply post-processing the value of `version in ThisProject` (and optionally `dynver in ThisProject`), for example by replacing '+' with '-' (emulating the docker support mentioned above):
 
 ```scala
-version in ThisBuild ~= (_.replace('+', '-'))
- dynver in ThisBuild ~= (_.replace('+', '-'))
+version in ThisProject ~= (_.replace('+', '-'))
+ dynver in ThisProject ~= (_.replace('+', '-'))
 ```
 
 To completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
@@ -141,13 +144,13 @@ def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
 
 def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
 
-inThisBuild(List(
+List(
   version := dynverGitDescribeOutput.value.mkVersion(versionFmt, fallbackVersion(dynverCurrentDate.value)),
    dynver := {
      val d = new java.util.Date
      sbtdynver.DynVer.getGitDescribeOutput(d).mkVersion(versionFmt, fallbackVersion(d))
    }
-))
+)
 ```
 
 Essentially this:
