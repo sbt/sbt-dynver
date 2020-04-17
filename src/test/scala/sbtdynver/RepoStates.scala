@@ -10,9 +10,9 @@ import scala.collection.JavaConverters._
 import org.eclipse.jgit.api._
 import org.eclipse.jgit.merge.MergeStrategy
 
-object RepoStates extends RepoStates(vTagPrefix = true)
+object RepoStates extends RepoStates(vTagPrefix = true, tagPrefix = "")
 
-sealed class RepoStates(vTagPrefix: Boolean) {
+sealed class RepoStates(vTagPrefix: Boolean, tagPrefix: String) {
   def notAGitRepo()                     = new State()
   def noCommits()                       = notAGitRepo().init()
   def onCommit()                        = noCommits().commit().commit().commit()
@@ -29,7 +29,7 @@ sealed class RepoStates(vTagPrefix: Boolean) {
   final class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
     val date = new GregorianCalendar(2016, 8, 17).getTime
-    val dynver = DynVer(Some(dir), DynVer.separator, vTagPrefix)
+    val dynver = DynVer(Some(dir), DynVer.separator, vTagPrefix, tagPrefix)
 
     var git: Git = _
     var sha: String = "undefined"

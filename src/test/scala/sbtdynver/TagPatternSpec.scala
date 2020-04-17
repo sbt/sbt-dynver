@@ -3,7 +3,7 @@ package sbtdynver
 import org.scalacheck._, Prop._
 
 object TagPatternVersionSpec extends Properties("TagPatternVersionSpec") {
-  val repoStates = new RepoStates(vTagPrefix = false)
+  val repoStates = new RepoStates(vTagPrefix = false, "")
   import repoStates._
 
   property("not a git repo")                               = notAGitRepo().version()          ?= "HEAD+20160917-0000"
