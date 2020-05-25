@@ -1,7 +1,10 @@
 import scala.sys.process.stringToProcess
 
-def versionFmt(out: sbtdynver.GitDescribeOutput): String =
-  out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + out.dirtySuffix.dropPlus.mkString("-", "")
+def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
+  val dirtySuffix = out.dirtySuffix.dropPlus.mkString("-", "")
+  if (out.isCleanAfterTag) out.ref.dropV.value + dirtySuffix // no commit info if clean after tag
+  else out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + dirtySuffix
+}
 
 def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"
 
@@ -24,7 +27,7 @@ TaskKey[Unit]("checkNoCommits")           := check(version.value, s"HEAD-${tstam
 TaskKey[Unit]("checkOnCommit")            := check(version.value, s"${headSha.value}")
 TaskKey[Unit]("checkOnCommitDirty")       := check(version.value, s"${headSha.value}-${tstamp.value}")
 TaskKey[Unit]("checkOnTag")               := check(version.value, s"1.0.0")
-TaskKey[Unit]("checkOnTagDirty")          := check(version.value, s"1.0.0-${tstamp.value}")
+TaskKey[Unit]("checkOnTagDirty")          := check(version.value, s"1.0.0-0-${headSha.value}-${tstamp.value}")
 TaskKey[Unit]("checkOnTagAndCommit")      := check(version.value, s"1.0.0-1-${headSha.value}")
 TaskKey[Unit]("checkOnTagAndCommitDirty") := check(version.value, s"1.0.0-1-${headSha.value}-${tstamp.value}")
 

@@ -9,13 +9,15 @@ organization := "com.dwijnand"
     homepage := scmInfo.value map (_.browseUrl)
      scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git"))
 
-       sbtPlugin           := true
+enablePlugins(SbtPlugin)
       sbtVersion in Global := "1.0.0" // must be Global, otherwise ^^ won't change anything
 crossSbtVersions           := List("0.13.17", "1.0.0")
 
+enablePlugins(ScriptedPlugin)
+
 scalaVersion := (CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value match {
   case Some((0, 13)) => "2.10.7"
-  case Some((1, _))  => "2.12.4"
+  case Some((1, _))  => "2.12.6"
   case _             => sys error s"Unhandled sbt version ${(sbtVersion in pluginCrossBuild).value}"
 })
 
@@ -30,8 +32,8 @@ scalacOptions  += "-Ywarn-dead-code"
 scalacOptions  += "-Ywarn-numeric-widen"
 scalacOptions  += "-Ywarn-value-discard"
 
-libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "4.4.1.201607150455-r" % Test
-libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.13.5"               % Test
+libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.7.0.202003110725-r" % Test
+libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.14.3"                % Test
 
              fork in Test := false
       logBuffered in Test := false
@@ -44,10 +46,17 @@ def toSbtPlugin(m: ModuleID) = Def.setting(
   Defaults.sbtPluginExtra(m, (sbtBinaryVersion in pluginCrossBuild).value, (scalaBinaryVersion in update).value)
 )
 
-mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "2.0.0").value)
+mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.0.0").value)
 
 import com.typesafe.tools.mima.core._, ProblemFilters._
-mimaBinaryIssueFilters ++= Seq()
+mimaBinaryIssueFilters ++= Seq(
+  // Migrated from a task key to a setting key
+  exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.isVersionStable"),
+  // private[sbtdynver]
+  exclude[DirectMissingMethodProblem]("sbtdynver.GitDescribeOutput.parse"),
+  // Migrated from a task key to an initialise
+  exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.dynverAssertTagVersion")
+)
 
 // TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
 

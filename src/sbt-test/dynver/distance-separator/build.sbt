@@ -1,7 +1,6 @@
 import scala.sys.process.stringToProcess
 
-version ~= (_.replace('+', '-'))
- dynver ~= (_.replace('+', '-'))
+dynverSeparator in ThisBuild := "-"
 
 def tstamp = Def.setting(sbtdynver.DynVer timestamp dynverCurrentDate.value)
 def headSha = {

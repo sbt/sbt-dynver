@@ -1,0 +1,36 @@
+### Breaking Changes
+
+#### tweak `version` to make it compatible with ivy2/maven wildcard patterns
+
+Prior to this change, the first "dirty" version (i.e with local, uncommitted changes) after a tag had the form
+`1.0.0+20140707-1030` (tag version + timestamp), while the version on the first commit after a tag was
+`1.0.0+1-1234abcd` (tag version + commit distance + commit sha). This meant that a version specified like
+"1.0.0+" would select the older version over the newer one.
+
+From version 3.0.0 onwards the first dirty version contains "+0" and the commit sha:
+`1.0.0+0-1234abcd-20140707-1030`.
+
+[#52][]/[#63][] by [@leonardehrenfried][]
+
+Thank you [@leonardehrenfried][]! But also [@lokkju][] reporting the issue, and [@raboof][] and [@laughedelic][]
+for helping in the review.
+
+### Improvements
+
+- Introduces `dynverSonatypeSnapshots` (disabled by default) which appends "-SNAPSHOT" to the version if
+    `isSnapshot` is `true` (it's only false when on a tag with no local changes). This opt-in makes it easier to
+    use sbt-dynver when publishing to Sonatype snapshots. [#53][]/[#64][] by [@leonardehrenfried][]
+
+Thanks again [@leonardehrenfried][].
+
+[#52]: https://github.com/dwijnand/sbt-dynver/issues/52
+[#53]: https://github.com/dwijnand/sbt-dynver/issues/53
+[#63]: https://github.com/dwijnand/sbt-dynver/pull/63
+[#64]: https://github.com/dwijnand/sbt-dynver/pull/64
+
+[@laughedelic]: https://github.com/laughedelic
+[@leonardehrenfried]: https://github.com/leonardehrenfried
+[@lokkju]: https://github.com/lokkju
+[@raboof]: https://github.com/raboof
+
+https://github.com/dwijnand/sbt-dynver/compare/v2.1.0...v3.0.0

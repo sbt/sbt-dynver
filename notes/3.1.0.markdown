@@ -1,0 +1,15 @@
+### Improvements
+
+- Faster way to count git commits [#74][] by [@agemooij][]
+- Count commits when no tags are present [#72][] by [@raboof][]
+- Add a new key 'previousStableVersion' which detects the last version [#50][] by [@jatcwang][]
+
+[#74]: https://github.com/dwijnand/sbt-dynver/issues/74
+[#72]: https://github.com/dwijnand/sbt-dynver/issues/72
+[#50]: https://github.com/dwijnand/sbt-dynver/pull/50
+
+[@agemooij]: https://github.com/agemooij
+[@jatcwang]: https://github.com/jatcwang
+[@raboof]: https://github.com/raboof
+
+https://github.com/dwijnand/sbt-dynver/compare/v3.0.0...v3.1.0
