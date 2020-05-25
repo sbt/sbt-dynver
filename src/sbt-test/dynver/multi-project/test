@@ -1,5 +1,5 @@
 > gitInitSetup
-> dirty foo
+> dirty .
 > gitAdd
 > gitCommit
 > gitTag foo-v1.0.0
@@ -7,7 +7,7 @@
 > reload
 > checkOnTagFoo
 
-> dirty bar
+> dirty .
 > gitAdd
 > gitCommit
 > gitTag bar-v2.0.0
@@ -15,7 +15,7 @@
 > reload
 > checkOnTagBar
 
-> dirty bar
+> dirty .
 > reload
 > checkOnTagBarDirty
 
@@ -23,6 +23,6 @@
 > reload
 > checkOnTagBarAndCommit
 
-> dirty bar
+> dirty .
 > reload
 > checkOnTagBarAndCommitDirty

@@ -92,9 +92,9 @@ If you're not seeing what you expect, then either start with this:
 
     git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"
 
-or change the value of `dynverVTagPrefix in ThisBuild` to remove the requirement for the v-prefix:
+or change the value of `dynverTagPrefix` to allow for custom prefixes of the git tags:
 
-    dynverVTagPrefix in ThisBuild := false
+    dynverTagPrefix := "foo-v"
 
 ## Tasks
 

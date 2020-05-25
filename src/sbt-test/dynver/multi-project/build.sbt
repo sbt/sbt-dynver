@@ -1,7 +1,6 @@
 import scala.sys.process.stringToProcess
 
-lazy val foo = project in file("foo")
-lazy val bar = project in file("bar")
+dynverTagPrefix in ThisBuild := "bar-v"
 
 def tstamp = Def.setting(sbtdynver.DynVer timestamp dynverCurrentDate.value)
 def headSha = {
@@ -11,11 +10,11 @@ def headSha = {
 
 def check(a: String, e: String) = assert(a == e, s"Version mismatch: Expected $e, Incoming $a")
 
-TaskKey[Unit]("checkOnTagFoo") := check((version in foo).value, "1.0.0")
-TaskKey[Unit]("checkOnTagBar") := check((version in bar).value, "2.0.0")
-TaskKey[Unit]("checkOnTagBarDirty")          := check((version in bar).value, s"2.0.0+${tstamp.value}")
-TaskKey[Unit]("checkOnTagBarAndCommit")      := check((version in bar).value, s"2.0.0+1-${headSha.value}")
-TaskKey[Unit]("checkOnTagBarAndCommitDirty") := check((version in bar).value, s"2.0.0+1-${headSha.value}+${tstamp.value}")
+TaskKey[Unit]("checkOnTagFoo") := check(version.value, s"0.0.0+1-${headSha.value}")
+TaskKey[Unit]("checkOnTagBar") := check(version.value, "2.0.0")
+TaskKey[Unit]("checkOnTagBarDirty")          := check(version.value, s"2.0.0+0-${headSha.value}+${tstamp.value}")
+TaskKey[Unit]("checkOnTagBarAndCommit")      := check(version.value, s"2.0.0+1-${headSha.value}")
+TaskKey[Unit]("checkOnTagBarAndCommitDirty") := check(version.value, s"2.0.0+1-${headSha.value}+${tstamp.value}")
 
 import sbt.complete.DefaultParsers._
 

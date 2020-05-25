@@ -42,7 +42,7 @@ object DynVerPlugin extends AutoPlugin {
   }
   import autoImport._
 
-  override def projectSettings = Seq(
+  override def buildSettings = Seq(
     version := {
       val out = dynverGitDescribeOutput.value
       val date = dynverCurrentDate.value
@@ -54,14 +54,14 @@ object DynVerPlugin extends AutoPlugin {
     isVersionStable         := dynverGitDescribeOutput.value.isVersionStable,
     previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
-    dynverTagPrefix                := DynVer.tagPrefix,
+    dynverTagPrefix                := { if(dynverVTagPrefix.value) sbtdynver.defaultTagPrefix else "" },
     dynverCurrentDate              := new Date,
     dynverInstance                 := DynVer(Some(buildBase.value), dynverSeparator.value, dynverTagPrefix.value),
     dynverGitDescribeOutput        := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
     dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
     dynverSeparator                := DynVer.separator,
-    dynverVTagPrefix               := DynVer.tagPrefix == "v",
+    dynverVTagPrefix               := DynVer.tagPrefix == sbtdynver.defaultTagPrefix,
 
     dynver                  := {
       val dynver = dynverInstance.value
@@ -80,14 +80,17 @@ object DynVerPlugin extends AutoPlugin {
   private val buildBase = baseDirectory in ThisBuild
 }
 
-final case class GitRef(value: String)
+sealed case class GitRef(value: String) {
+  def isTag: Boolean = GitRef.GitRefOps(this).isTag
+  def dropV: GitRef = GitRef.GitRefOps(this).dropV
+}
 final case class GitCommitSuffix(distance: Int, sha: String)
 final case class GitDirtySuffix(value: String)
 
 object GitRef extends (String => GitRef) {
   final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
-    def isTag: Boolean = value startsWith "v"
-    def dropV: GitRef = GitRef(value.replaceAll("^v", ""))
+    def isTag: Boolean = value startsWith defaultTagPrefix
+    def dropV: GitRef = GitRef(value.replaceAll(s"^$defaultTagPrefix", ""))
     def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
   }
 }
@@ -139,24 +142,33 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
 
   private[sbtdynver] final class Parser(tagPrefix: String) {
-    private val Tag = s"""($tagPrefix[0-9][^+]*?)""".r
+    private val Tag = (if (tagPrefix != "") s"""($tagPrefix[0-9][^+]*?)""" else """([0-9]+\.[^+]*?)""").r
 
     private val FromTag  = s"""^$OptWs$Tag$CommitSuffix?$TstampSuffix?$OptWs$$""".r
     private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
     private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
 
     private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
-      case FromTag(tag, _, dist, sha, dirty) => parse0(v(tag), dist, sha, dirty)
-      case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty)
-      case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty)
+      case FromTag(tag, _, dist, sha, dirty) => parse0(   tag, dist, sha, dirty, istag = true )
+      case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty, istag = false)
+      case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty, istag = false)
     }
 
-    // If tags aren't v-prefixed, add the v back, so the rest of dynver works (e.g. GitRef#isTag)
-    private def v(s: String) = s"$tagPrefix$s"
-
-    private def parse0(ref: String, dist: String, sha: String, dirty: String) = {
+    private def parse0(ref: String, dist: String, sha: String, dirty: String, istag: Boolean) = {
       val commit = if (dist == null || sha == null) GitCommitSuffix(0, "") else GitCommitSuffix(dist.toInt, sha)
-      GitDescribeOutput(GitRef(ref), commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
+      val gitRef = new GitRef(ref) { self =>
+        override def isTag: Boolean = istag
+        override def dropV: GitRef =
+          if(istag) {
+            new GitRef(ref.replaceAll(s"^$tagPrefix", "")) { self =>
+              override def isTag: Boolean = istag
+              override def dropV: GitRef = self
+            }
+          } else {
+            self
+          }
+      }
+      GitDescribeOutput(gitRef, commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
     }
   }
 
@@ -184,7 +196,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String) {
-  private def this(wd: Option[File], separator: String) = this(wd, separator, "v")
+  private def this(wd: Option[File], separator: String) = this(wd, separator, defaultTagPrefix)
   private def this(wd: Option[File]) = this(wd, "+")
 
   private val TagPattern = s"$tagPrefix[0-9]*"
@@ -209,7 +221,6 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
   def getGitDescribeOutput(d: Date): Option[GitDescribeOutput] = {
     val process = Process(s"git describe --long --tags --abbrev=8 --match $TagPattern --always --dirty=+${timestamp(d)}", wd)
     Try(process !! impl.NoProcessLogger).toOption
-      .map(_.stripPrefix(tagPrefix))
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(parser.parse)
       .flatMap(output =>
@@ -239,14 +250,16 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
       .filter(_.trim.nonEmpty)
   }
 
-  def copy(wd: Option[File] = wd): DynVer = new DynVer(wd, separator)
+  def copy(wd: Option[File] = wd): DynVer = new DynVer(wd, separator, tagPrefix)
 }
 
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
   override def apply(wd: Option[File]) = apply(wd, separator, tagPrefix)
 }
 
-object `package`
+object `package` {
+  private[sbtdynver] val defaultTagPrefix = "v"
+}
 
 package impl {
   object NoProcessLogger extends ProcessLogger {

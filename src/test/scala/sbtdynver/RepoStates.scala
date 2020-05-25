@@ -24,7 +24,7 @@ sealed class RepoStates(tagPrefix: String) {
   def onTagAndSecondCommit()            = onTagAndCommitDirty().commit()
   def onSecondTag(n: String = "2.0.0")  = onTagAndSecondCommit().tag(vOptPrefix(n))
 
-  private def vOptPrefix(s: String) = if (s.startsWith("v")) s else s"$tagPrefix$s"
+  private def vOptPrefix(s: String) = if (s.startsWith(tagPrefix)) s else s"$tagPrefix$s"
 
   final class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
