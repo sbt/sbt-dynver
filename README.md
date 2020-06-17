@@ -113,7 +113,7 @@ changes).  This opt-in exists because the Sonatype's snapshots repository requir
 
 ## Portable version strings
 
-The default version string format includes `+` characters, which is an escape charater in URL and is not compatible with docker tags. 
+The default version string format includes `+` characters, which is an escape character in URL and is not compatible with docker tags. 
 This character can be overridden by setting:
 
 ```scala
