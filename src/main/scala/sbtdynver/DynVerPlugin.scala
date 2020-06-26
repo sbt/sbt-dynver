@@ -1,6 +1,6 @@
 package sbtdynver
 
-import java.util._
+import java.util._, regex.Pattern
 
 import scala.{ PartialFunction => ?=> }
 import scala.util._
@@ -22,6 +22,7 @@ object DynVerPlugin extends AutoPlugin {
     val dynverSonatypeSnapshots        = settingKey[Boolean]("Whether to append -SNAPSHOT to snapshot versions")
     val dynverGitPreviousStableVersion = settingKey[Option[GitDescribeOutput]]("The last stable tag")
     val dynverSeparator                = settingKey[String]("The separator to use between tag and distance, and the hash and dirty timestamp")
+    val dynverTagPrefix                = settingKey[String]("The prefix to use when matching the version tag")
     val dynverVTagPrefix               = settingKey[Boolean]("Whether or not tags have a 'v' prefix")
     val dynverCheckVersion             = taskKey[Boolean]("Checks if version and dynver match")
     val dynverAssertVersion            = taskKey[Unit]("Asserts if version and dynver match")
@@ -53,13 +54,20 @@ object DynVerPlugin extends AutoPlugin {
     isVersionStable         := dynverGitDescribeOutput.value.isVersionStable,
     previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
+    dynverInstance := {
+      val tagPrefix = dynverTagPrefix.value
+      val vTagPrefix = dynverVTagPrefix.value
+      assert(vTagPrefix ^ tagPrefix != "v", s"Incoherence: dynverTagPrefix=$tagPrefix vs dynverVTagPrefix=$vTagPrefix")
+      DynVer(Some(buildBase.value), dynverSeparator.value, tagPrefix)
+    },
+
     dynverCurrentDate              := new Date,
-    dynverInstance                 := DynVer(Some(buildBase.value), dynverSeparator.value, dynverVTagPrefix.value),
     dynverGitDescribeOutput        := dynverInstance.value.getGitDescribeOutput(dynverCurrentDate.value),
     dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
     dynverSeparator                := DynVer.separator,
-    dynverVTagPrefix               := DynVer.vTagPrefix,
+    dynverTagPrefix                := DynVer.tagPrefix,
+    dynverVTagPrefix               := dynverTagPrefix.value == "v",
 
     dynver                  := {
       val dynver = dynverInstance.value
@@ -78,15 +86,27 @@ object DynVerPlugin extends AutoPlugin {
   private val buildBase = baseDirectory in ThisBuild
 }
 
-final case class GitRef(value: String)
+sealed case class GitRef(value: String)
 final case class GitCommitSuffix(distance: Int, sha: String)
 final case class GitDirtySuffix(value: String)
 
+private final class GitTag(value: String, val prefix: String) extends GitRef(value) {
+  override def toString = s"GitTag($value, prefix=$prefix)"
+}
+
 object GitRef extends (String => GitRef) {
   final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
-    def isTag: Boolean = value startsWith "v"
-    def dropV: GitRef = GitRef(value.replaceAll("^v", ""))
+    private def prefix = x match {
+      case x: GitTag => x.prefix
+      case _         => DynVer.tagPrefix
+    }
+
+    def isTag: Boolean     = value.startsWith(prefix)
+    def dropPrefix: String = value.stripPrefix(prefix)
     def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
+
+    @deprecated("Generalised to all prefixes, use dropPrefix (note it returns just the string)", "4.1.0")
+    def dropV: GitRef = if (value.startsWith("v")) GitRef(value.stripPrefix("v")) else x
   }
 }
 
@@ -109,8 +129,8 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version(sep: String): String = {
     val dirtySuffix = this.dirtySuffix.withSeparator(sep)
-    if (isCleanAfterTag) ref.dropV.value + dirtySuffix // no commit info if clean after tag
-    else if (commitSuffix.sha.nonEmpty) ref.dropV.value + sep + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix
+    if (isCleanAfterTag) ref.dropPrefix + dirtySuffix // no commit info if clean after tag
+    else if (commitSuffix.sha.nonEmpty) ref.dropPrefix + sep + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix
     else "0.0.0" + sep + commitSuffix.distance + "-" + ref.value + dirtySuffix
   }
 
@@ -120,7 +140,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
   def sonatypeVersion: String    = sonatypeVersion(DynVer.separator)
 
   def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty || isDirty()
-  def previousVersion: String    = ref.dropV.value
+  def previousVersion: String    = ref.dropPrefix
   def isVersionStable(): Boolean = !isDirty()
 
   def hasNoTags(): Boolean       = !ref.isTag
@@ -136,25 +156,33 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   private val CommitSuffix = s"""($Distance-$Sha)""".r
   private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
 
-  private[sbtdynver] final class Parser(vTagPrefix: Boolean) {
-    private val Tag = (if (vTagPrefix) """(v[0-9][^+]*?)""" else """([0-9]+\.[^+]*?)""").r
+  private[sbtdynver] final class Parser(tagPrefix: String) {
+    private val tagBody = tagPrefix match {
+      case "" => """([0-9]+\.[^+]*?)""" // Use a dot to distinguish tags for SHAs...
+      case _  => """([0-9]+[^+]*?)"""   // ... but not when there's a prefix (e.g. v2 is a tag)
+    }
+    private val Tag = s"${Pattern.quote(tagPrefix)}$tagBody".r // quote the prefix so it doesn't interact
 
     private val FromTag  = s"""^$OptWs$Tag$CommitSuffix?$TstampSuffix?$OptWs$$""".r
     private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
     private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
 
     private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
-      case FromTag(tag, _, dist, sha, dirty) => parse0(v(tag), dist, sha, dirty)
-      case FromSha(sha, dirty)               => parse0(   sha,  "0",  "", dirty)
-      case FromHead(dirty)                   => parse0("HEAD",  "0",  "", dirty)
+      case FromTag(tag, _, dist, sha, dirty) => parseWithTag(tag, dist, sha, dirty)
+      case FromSha(sha, dirty)               => parseWithRef(sha,    dirty)
+      case FromHead(dirty)                   => parseWithRef("HEAD", dirty)
     }
 
-    // If tags aren't v-prefixed, add the v back, so the rest of dynver works (e.g. GitRef#isTag)
-    private def v(s: String) = if (vTagPrefix) s else s"v$s"
-
-    private def parse0(ref: String, dist: String, sha: String, dirty: String) = {
+    private def parseWithTag(tag: String, dist: String, sha: String, dirty: String) = {
+      // the "value" of the GitTag is the entire string section, with the prefix
+      // but also keep the, user-customisable, prefix so dropPrefix knows what to drop
+      val gitTag = new GitTag(tagPrefix + tag, tagPrefix)
       val commit = if (dist == null || sha == null) GitCommitSuffix(0, "") else GitCommitSuffix(dist.toInt, sha)
-      GitDescribeOutput(GitRef(ref), commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
+      GitDescribeOutput(gitTag, commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
+    }
+
+    private def parseWithRef(ref: String, dirty: String) = {
+      GitDescribeOutput(GitRef(ref), GitCommitSuffix(0, ""), GitDirtySuffix(if (dirty eq null) "" else dirty))
     }
   }
 
@@ -181,12 +209,15 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 }
 
 // sealed just so the companion object can extend it. Shouldn't've been a case class.
-sealed case class DynVer(wd: Option[File], separator: String, vTagPrefix: Boolean) {
+sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String) {
+  private def this(wd: Option[File], separator: String, vTagPrefix: Boolean) = this(wd, separator, if (vTagPrefix) "v" else "")
   private def this(wd: Option[File], separator: String) = this(wd, separator, true)
   private def this(wd: Option[File]) = this(wd, "+")
 
-  private val TagPattern = if (vTagPrefix) "v[0-9]*" else "[0-9]*"
-  private[sbtdynver] val parser = new GitDescribeOutput.Parser(vTagPrefix)
+  def vTagPrefix = tagPrefix == "v" // bincompat
+
+  private val TagPattern = s"$tagPrefix[0-9]*" // used by `git describe` to filter the tags
+  private[sbtdynver] val parser = new GitDescribeOutput.Parser(tagPrefix) // .. then parsed back
 
   def version(d: Date): String            = getGitDescribeOutput(d).versionWithSep(d, separator)
   def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d).sonatypeVersionWithSep(d, separator)
@@ -236,11 +267,12 @@ sealed case class DynVer(wd: Option[File], separator: String, vTagPrefix: Boolea
       .filter(_.trim.nonEmpty)
   }
 
-  def copy(wd: Option[File] = wd): DynVer = new DynVer(wd, separator)
+  def copy(wd: Option[File] = wd): DynVer = new DynVer(wd, separator, tagPrefix)
 }
 
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
-  override def apply(wd: Option[File]) = apply(wd, separator, vTagPrefix)
+  override def apply(wd: Option[File]) = new DynVer(wd)
+  def apply(wd: Option[File], separator: String, vTagPrefix: Boolean) = new DynVer(wd, separator, vTagPrefix) // bincompat
 }
 
 object `package`

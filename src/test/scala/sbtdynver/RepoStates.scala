@@ -10,26 +10,26 @@ import scala.collection.JavaConverters._
 import org.eclipse.jgit.api._
 import org.eclipse.jgit.merge.MergeStrategy
 
-object RepoStates extends RepoStates(vTagPrefix = true)
+object RepoStates extends RepoStates(tagPrefix = "v")
 
-sealed class RepoStates(vTagPrefix: Boolean) {
+sealed class RepoStates(tagPrefix: String) {
   def notAGitRepo()                     = new State()
   def noCommits()                       = notAGitRepo().init()
   def onCommit()                        = noCommits().commit().commit().commit()
   def onCommitDirty()                   = onCommit().dirty()
-  def onTag(n: String = "1.0.0")        = onCommit().tag(vOptPrefix(n))
+  def onTag(n: String = "1.0.0")        = onCommit().tag(optPrefix(n))
   def onTagDirty()                      = onTag().dirty()
   def onTagAndCommit()                  = onTag().commit()
   def onTagAndCommitDirty()             = onTagAndCommit().dirty()
   def onTagAndSecondCommit()            = onTagAndCommitDirty().commit()
-  def onSecondTag(n: String = "2.0.0")  = onTagAndSecondCommit().tag(vOptPrefix(n))
+  def onSecondTag(n: String = "2.0.0")  = onTagAndSecondCommit().tag(optPrefix(n))
 
-  private def vOptPrefix(s: String) = if (s.startsWith("v")) s else if (vTagPrefix) s"v$s" else s
+  private def optPrefix(s: String) = if (s.startsWith(tagPrefix)) s else s"$tagPrefix$s"
 
   final class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
     val date = new GregorianCalendar(2016, 8, 17).getTime
-    val dynver = DynVer(Some(dir), DynVer.separator, vTagPrefix)
+    val dynver = DynVer(Some(dir), DynVer.separator, tagPrefix)
 
     var git: Git = _
     var sha: String = "undefined"
