@@ -92,9 +92,13 @@ If you're not seeing what you expect, then either start with this:
 
     git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"
 
-or change the value of `dynverTagPrefix` to allow for custom prefixes of the git tags:
+or change the value of `dynverVTagPrefix in ThisBuild` to remove the requirement for the v-prefix:
 
-    dynverTagPrefix := "foo-v"
+    dynverVTagPrefix in ThisBuild := false
+
+or, more generally, use `dynverTagPrefix in ThisBuild` to fully customising tag prefixes, for example:
+
+    dynverTagPrefix in ThisBuild := "foo-" // our tags have the format foo-<version>, e.g. foo-1.2.3
 
 ## Tasks
 
@@ -135,8 +139,8 @@ To completely customise the string format you can use `dynverGitDescribeOutput`,
 ```scala
 def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
   val dirtySuffix = out.dirtySuffix.dropPlus.mkString("-", "")
-  if (out.isCleanAfterTag) out.ref.dropV.value + dirtySuffix // no commit info if clean after tag
-  else out.ref.dropV.value + out.commitSuffix.mkString("-", "-", "") + dirtySuffix
+  if (out.isCleanAfterTag) out.ref.dropPrefix + dirtySuffix // no commit info if clean after tag
+  else out.ref.dropPrefix + out.commitSuffix.mkString("-", "-", "") + dirtySuffix
 }
 
 def fallbackVersion(d: java.util.Date): String = s"HEAD-${sbtdynver.DynVer timestamp d}"

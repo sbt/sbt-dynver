@@ -17,14 +17,14 @@ sealed class RepoStates(tagPrefix: String) {
   def noCommits()                       = notAGitRepo().init()
   def onCommit()                        = noCommits().commit().commit().commit()
   def onCommitDirty()                   = onCommit().dirty()
-  def onTag(n: String = "1.0.0")        = onCommit().tag(vOptPrefix(n))
+  def onTag(n: String = "1.0.0")        = onCommit().tag(optPrefix(n))
   def onTagDirty()                      = onTag().dirty()
   def onTagAndCommit()                  = onTag().commit()
   def onTagAndCommitDirty()             = onTagAndCommit().dirty()
   def onTagAndSecondCommit()            = onTagAndCommitDirty().commit()
-  def onSecondTag(n: String = "2.0.0")  = onTagAndSecondCommit().tag(vOptPrefix(n))
+  def onSecondTag(n: String = "2.0.0")  = onTagAndSecondCommit().tag(optPrefix(n))
 
-  private def vOptPrefix(s: String) = if (s.startsWith(tagPrefix)) s else s"$tagPrefix$s"
+  private def optPrefix(s: String) = if (s.startsWith(tagPrefix)) s else s"$tagPrefix$s"
 
   final class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
