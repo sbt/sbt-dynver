@@ -13,6 +13,7 @@ object VersionSpec extends Properties("VersionSpec") {
   property("on tag v1.0.0 with local changes")              = onTagDirty().version()          ?= "1.0.0+0-1234abcd+20160917-0000"
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().version()      ?= "1.0.0+1-1234abcd"
   property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().version() ?= "1.0.0+1-1234abcd+20160917-0000"
+  property("on tag v2")                                     = onTag("v2").version()           ?= "2" // #7, didn't match
 }
 
 object PreviousVersionSpec extends Properties("PreviousVersionSpec") {
@@ -106,12 +107,14 @@ object IsSnapshotSpec extends Properties("IsSnapshotSpec") {
   property("on tag v1.0.0 with local changes")              = onTagDirty().isSnapshot()          ?= true
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().isSnapshot()      ?= true
   property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().isSnapshot() ?= true
+  property("on tag v2")                                     = onTag("v2").isSnapshot()           ?= false
 }
 
 object SonatypeSnapshotSpec extends Properties("SonatypeSnapshotSpec") {
   property("on tag v1.0.0 with local changes")                = onTagDirty().sonatypeVersion()     ?= "1.0.0+0-1234abcd+20160917-0000-SNAPSHOT"
   property("on tag v1.0.0 and 1 commit, w/o local changes S") = onTagAndCommit().sonatypeVersion() ?= "1.0.0+1-1234abcd-SNAPSHOT"
   property("on tag v1.0.0, w/o local changes")                = onTag().sonatypeVersion()          ?= "1.0.0"
+  property("on tag v2")                                     = onTag("v2").sonatypeVersion()        ?= "2"
 }
 
 object isVersionStableSpec extends Properties("IsVersionStableSpec") {
@@ -123,4 +126,5 @@ object isVersionStableSpec extends Properties("IsVersionStableSpec") {
   property("on tag v1.0.0 with local changes")              = onTagDirty().isVersionStable()          ?= false
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().isVersionStable()      ?= true
   property("on tag v1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().isVersionStable() ?= false
+  property("on tag v2")                                     = onTag("v2").isVersionStable()           ?= true
 }
