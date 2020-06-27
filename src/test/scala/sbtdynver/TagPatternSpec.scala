@@ -1,6 +1,7 @@
 package sbtdynver
 
-import org.scalacheck._, Prop._, util.Pretty, Pretty.pretty
+import org.scalacheck._, Prop._
+import testkit._
 
 object TagPatternVersionSpec extends Properties("TagPatternVersionSpec") {
   val repoStates = new RepoStates(tagPrefix = "")
@@ -15,13 +16,6 @@ object TagPatternVersionSpec extends Properties("TagPatternVersionSpec") {
   property("on tag 1.0.0 and 1 commit, w/o local changes") = onTagAndCommit().version()       ?= "1.0.0+1-1234abcd"
   property("on tag 1.0.0 and 1 commit with local changes") = onTagAndCommitDirty().version()  ?= "1.0.0+1-1234abcd+20160917-0000"
 
-  implicit class LazyAnyOps[A](x: => A)(implicit ev: A => Pretty) {
-    def ??=(y: A) = {
-      if (x == y) passed // the standard "?=" uses "proved" while we want to run multiple times
-      else falsified :| s"Expected ${pretty(y)} but got ${pretty(x)}"
-    }
-  }
-
   override def overrideParameters(p: Test.Parameters) =
-    p.withMinSuccessfulTests(3) // .. but not 100 times!
+    p.withMinSuccessfulTests(3) // no need to run 100 times!
 }
