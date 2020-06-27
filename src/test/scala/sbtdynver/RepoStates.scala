@@ -26,9 +26,12 @@ sealed class RepoStates(tagPrefix: String) {
 
   private def optPrefix(s: String) = if (s.startsWith(tagPrefix)) s else s"$tagPrefix$s"
 
-  final class State() {
-    JGitSystemReader.init
+  locally {
+    JGitSystemReader.init // see JGitSystemReader's docs
+    noCommits() // & seed JGit's FS.FileStoreAttributes.attributeCache with my tmp directory's BsdFileStore
+  }
 
+  final class State() {
     val dir = doto(Files.createTempDirectory(s"dynver-test-").toFile)(_.deleteOnExit())
     val date = new GregorianCalendar(2016, 8, 17).getTime
     val dynver = DynVer(Some(dir), DynVer.separator, tagPrefix)
