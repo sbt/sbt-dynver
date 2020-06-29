@@ -1,4 +1,4 @@
-name: Drafts your next release notes as pull requests are merged
+name: Release Drafter
 
 on:
   push:

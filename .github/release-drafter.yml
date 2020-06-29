@@ -1,7 +1,7 @@
 # https://github.com/marketplace/actions/release-drafter
 name-template: '$NEXT_PATCH_VERSION'
 
-change-template: '* $TITLE: $BODY.  [#$NUMBER](https://github.com/dwijnand/sbt-dynver/pull/$NUMBER) by [@$AUTHOR](https://github.com/$AUTHOR)'
+change-template: '* $TITLE.  [#$NUMBER](https://github.com/dwijnand/sbt-dynver/pull/$NUMBER) by [@$AUTHOR](https://github.com/$AUTHOR)'
 
 categories:
   - title: 'Dependency Updates'
