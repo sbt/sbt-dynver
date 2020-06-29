@@ -1,0 +1,18 @@
+pull_request_rules:
+  - name: Label scala-steward's PRs
+    conditions:
+      - author=scala-steward
+    actions:
+      label:
+        add: [dependency-update]
+  - name: Merge ScalaSteward's PRs
+    conditions:
+      - author=scala-steward
+      - status-success=Travis CI - Pull Request
+      # or, using the modern travis-ci.com service:
+      # - status-success=continuous-integration/travis-ci/pr
+      - "#changes-requested-reviews-by=0"
+      - "#review-requested=0"
+    actions:
+      merge:
+        method: merge

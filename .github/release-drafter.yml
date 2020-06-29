@@ -1,0 +1,15 @@
+# https://github.com/marketplace/actions/release-drafter
+name-template: '$NEXT_PATCH_VERSION'
+
+change-template: '* $TITLE: $BODY.  [#$NUMBER](https://github.com/dwijnand/sbt-dynver/pull/$NUMBER) by [@$AUTHOR](https://github.com/$AUTHOR)'
+
+categories:
+  - title: 'Dependency Updates'
+    label: 'type: dependencies'
+
+template: |
+  ## Changes
+
+  $CHANGES
+
+  https://github.com/dwijnand/sbt-dynver/compare/$PREVIOUS_TAG...$NEXT_PATCH_VERSION
