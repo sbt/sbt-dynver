@@ -12,3 +12,5 @@ jobs:
     steps:
       - name: Release Drafter
         uses: release-drafter/release-drafter@v5.11.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
