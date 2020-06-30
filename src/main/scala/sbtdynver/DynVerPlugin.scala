@@ -55,8 +55,8 @@ object DynVerPlugin extends AutoPlugin {
     previousStableVersion   := dynverGitPreviousStableVersion.value.previousVersion,
 
     dynverInstance := {
-      val tagPrefix = dynverTagPrefix.value
       val vTagPrefix = dynverVTagPrefix.value
+      val tagPrefix = dynverTagPrefix.?.value.getOrElse(if (vTagPrefix) "v" else "")
       assert(vTagPrefix ^ tagPrefix != "v", s"Incoherence: dynverTagPrefix=$tagPrefix vs dynverVTagPrefix=$vTagPrefix")
       DynVer(Some(buildBase.value), dynverSeparator.value, tagPrefix)
     },
@@ -66,8 +66,7 @@ object DynVerPlugin extends AutoPlugin {
     dynverSonatypeSnapshots        := false,
     dynverGitPreviousStableVersion := dynverInstance.value.getGitPreviousStableTag,
     dynverSeparator                := DynVer.separator,
-    dynverTagPrefix                := DynVer.tagPrefix,
-    dynverVTagPrefix               := dynverTagPrefix.value == "v",
+    dynverVTagPrefix               := dynverTagPrefix.??(DynVer.tagPrefix).value == "v",
 
     dynver                  := {
       val dynver = dynverInstance.value
