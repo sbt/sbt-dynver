@@ -81,7 +81,7 @@ comes from the branch you merged into (e.g. `master` in `git checkout master && 
 To use this feature with the Migration Manager [MiMa](https://github.com/lightbend/migration-manager) sbt plugin, add
 
 ```scala
-mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% name.value % _).toSet
+mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% moduleName.value % _).toSet
 ```
 
 ## Tag Requirements
