@@ -1,7 +1,6 @@
-val sbtdynver = project in file(".")
+val sbtdynver = project.in(file(".")).settings(name := "sbt-dynver")
 
 organization := "com.dwijnand"
-        name := "sbt-dynver"
     licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0"))
  description := "An sbt plugin to dynamically set your version from git"
   developers := List(Developer("dwijnand", "Dale Wijnand", "dale wijnand gmail com", url("https://dwijnand.com")))
@@ -10,16 +9,10 @@ organization := "com.dwijnand"
      scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git"))
 
 enablePlugins(SbtPlugin)
-      sbtVersion in Global := "1.0.0" // must be Global, otherwise ^^ won't change anything
-crossSbtVersions           := List("0.13.17", "1.0.0")
+Global / sbtVersion  := "1.0.0" // must be Global, otherwise ^^ won't change anything
+    crossSbtVersions := List("1.0.0")
 
-enablePlugins(ScriptedPlugin)
-
-scalaVersion := (CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value match {
-  case Some((0, 13)) => "2.10.7"
-  case Some((1, _))  => "2.12.6"
-  case _             => sys error s"Unhandled sbt version ${(sbtVersion in pluginCrossBuild).value}"
-})
+scalaVersion := "2.12.12"
 
        maxErrors := 15
 triggeredMessage := Watched.clearWhenTriggered
@@ -33,17 +26,17 @@ scalacOptions  += "-Ywarn-numeric-widen"
 scalacOptions  += "-Ywarn-value-discard"
 
 libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.8.1.202007141445-r" % Test
-libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.14.3"                % Test
+libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.14.3"               % Test
 
-             fork in Test := false
-      logBuffered in Test := false
-parallelExecution in Test := true
+Test /              fork := false
+Test /       logBuffered := false
+Test / parallelExecution := true
 
 scriptedLaunchOpts ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value)
 scriptedBufferLog := true
 
 def toSbtPlugin(m: ModuleID) = Def.setting(
-  Defaults.sbtPluginExtra(m, (sbtBinaryVersion in pluginCrossBuild).value, (scalaBinaryVersion in update).value)
+  Defaults.sbtPluginExtra(m, (pluginCrossBuild / sbtBinaryVersion).value, (update / scalaBinaryVersion).value)
 )
 
 mimaPreviousArtifacts := Set(toSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.0.0").value)
@@ -58,8 +51,9 @@ mimaBinaryIssueFilters ++= Seq(
   exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.dynverAssertTagVersion"),
   // GitDescribeOutput#Parser is private[sbtdynver]
   exclude[Problem]("sbtdynver.GitDescribeOutput#Parser*"),
+  // lightbend/mima#388
+  // static method requires()sbt.Plugins in class sbtdynver.DynVerPlugin does not have a correspondent in current version
+  exclude[DirectMissingMethodProblem]("sbtdynver.DynVerPlugin.requires"),
 )
 
-// TaskKey[Unit]("verify") := Def.sequential(test in Test, scripted.toTask(""), mimaReportBinaryIssues).value
-
-cancelable in Global := true
+Global / cancelable := true
