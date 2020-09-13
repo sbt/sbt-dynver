@@ -27,7 +27,6 @@ sealed class RepoStates(tagPrefix: String) {
   private def optPrefix(s: String) = if (s.startsWith(tagPrefix)) s else s"$tagPrefix$s"
 
   locally {
-    JGitSystemReader.init // see JGitSystemReader's docs
     noCommits() // & seed JGit's FS.FileStoreAttributes.attributeCache with my tmp directory's BsdFileStore
   }
 
