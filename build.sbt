@@ -1,5 +1,5 @@
 val dynverRoot = project.in(file("."))
-aggregateProjects(dynverLib, sbtdynver)
+aggregateProjects(dynverLib, sbtdynver, dynverCli)
 
 inThisBuild(List(
   organization := "com.dwijnand",
@@ -52,6 +52,22 @@ lazy val publishSettings = Def.settings(
   bintrayRepository   := "sbt-plugins",
   bintray / resolvers := Nil, // disable getting my bintray repo through my local credentials; be like CI
 )
+
+val dynverCli = (project in file("dynver-cli")).dependsOn(dynverP).settings(
+  name := "dynver-cli",
+  libraryDependencies += "com.github.scopt" %% "scopt" % "4.0.0",
+  buildInfoPackage := "dynver.cli",
+  graalVMNativeImageOptions := Seq(
+    "--initialize-at-build-time",      // why?
+    "--no-fallback",
+    "--no-server",
+    "--verbose",                       // why?
+    "-H:+JNI",                         // why?
+    "-H:+ReportExceptionStackTraces",  // why?
+    "-H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages", // why?
+  ),
+  mimaSettings,
+).enablePlugins(BuildInfoPlugin, GraalVMNativeImagePlugin)
 
 mimaPreviousArtifacts := Set.empty
 publish / skip        := true
