@@ -54,10 +54,8 @@ object GitDirtySuffix extends (String => GitDirtySuffix) {
 
 final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) {
   def version(sep: String): String = {
-    val dirtySuffix = this.dirtySuffix.withSeparator(sep)
-    if (isCleanAfterTag) ref.dropPrefix + dirtySuffix // no commit info if clean after tag
-    else if (commitSuffix.sha.nonEmpty) ref.dropPrefix + sep + commitSuffix.distance + "-" + commitSuffix.sha + dirtySuffix
-    else "0.0.0" + sep + commitSuffix.distance + "-" + ref.value + dirtySuffix
+    if (isCleanAfterTag) ref.dropPrefix
+    else ref.dropPrefix + commitSuffix.mkString(sep, "-", "") + dirtySuffix.withSeparator(sep)
   }
 
   def sonatypeVersion(sep: String): String = if (isSnapshot) version(sep) + "-SNAPSHOT" else version(sep)
@@ -158,12 +156,13 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
     Try(process !! NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(parser.parse)
-      .flatMap(output =>
-        if (output.hasNoTags) getDistanceToFirstCommit().map(dist =>
-          output.copy(commitSuffix = output.commitSuffix.copy(distance = dist))
-        )
-        else Some(output)
-      )
+      .flatMap { out =>
+        if (out.hasNoTags)
+          getDistanceToFirstCommit().map { distance =>
+            GitDescribeOutput(GitRef("0.0.0"), GitCommitSuffix(distance, out.ref.value), out.dirtySuffix)
+          }
+        else Some(out)
+      }
   }
 
   def getGitPreviousStableTag: Option[GitDescribeOutput] = {
