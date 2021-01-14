@@ -36,7 +36,6 @@ val dynver = project.settings(
   publishSettings,
 )
 
-import com.typesafe.tools.mima.core._, ProblemFilters._
 val sbtdynver = project.dependsOn(dynverP).enablePlugins(SbtPlugin).settings(
   name := "sbt-dynver",
 
@@ -53,26 +52,24 @@ lazy val publishSettings = Def.settings(
   bintrayRepository := "sbt-plugins",
 )
 
+import com.typesafe.tools.mima.core._
 lazy val mimaSettings = Seq(
-  mimaPreviousArtifacts   := Set.empty, // Set(projectID.value.withRevision("4.0.0")),
+  mimaPreviousArtifacts   := Set(projID.value.withRevision("5.0.0-M2")),
   mimaBinaryIssueFilters ++= Seq(
-    // Migrated from a task key to a setting key
-    exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.isVersionStable"),
-    // private[sbtdynver]
-    exclude[DirectMissingMethodProblem]("sbtdynver.GitDescribeOutput.parse"),
-    // Migrated from a task key to an initialise
-    exclude[IncompatibleResultTypeProblem]("sbtdynver.DynVerPlugin#autoImport.dynverAssertTagVersion"),
-    // GitDescribeOutput#Parser is private[sbtdynver]
-    exclude[Problem]("sbtdynver.GitDescribeOutput#Parser*"),
-    // lightbend/mima#388
-    // static method requires()sbt.Plugins in class sbtdynver.DynVerPlugin does not have a correspondent in current version
-    exclude[DirectMissingMethodProblem]("sbtdynver.DynVerPlugin.requires"),
+    ProblemFilters.exclude[Problem]("*.impl.*"), // impl is for internal implementation details
   ),
 )
 
-mimaPreviousArtifacts := Set.empty
-publish / skip := true
+lazy val projID = Def.setting {
+  // Using projectID something is wrong... Looks for dynver_2.12 but artifacts are name=dynver
+  val sbtBv = (pluginCrossBuild /   sbtBinaryVersion).value
+  val sbv   = (pluginCrossBuild / scalaBinaryVersion).value
+  val mid   = organization.value %% moduleName.value % "0.0.0"
+  if (sbtPlugin.value) Defaults.sbtPluginExtra(mid, sbtBv, sbv) else mid
+}
 
-Global / cancelable := true
+mimaPreviousArtifacts := Set.empty
+publish / skip        := true
 
 Global / excludeLintKeys += crossSbtVersions // Used by the "^" command (PluginCrossCommand)
+Global / cancelable      := true
