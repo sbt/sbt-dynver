@@ -107,6 +107,9 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
+    def getVersion(date: Date, separator: String, sonatypeSnapshots: Boolean): String =
+      if (sonatypeSnapshots) sonatypeVersionWithSep(date, separator) else versionWithSep(date, separator)
+
     def         versionWithSep(d: Date, sep: String): String = mkVersion(_        .version(sep), fallback(sep, d))
     def sonatypeVersionWithSep(d: Date, sep: String): String = mkVersion(_.sonatypeVersion(sep), fallback(sep, d))
 
@@ -120,6 +123,12 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
 
     def isSnapshot: Boolean      = _x.forall(_.isSnapshot)
     def isVersionStable: Boolean = _x.exists(_.isVersionStable)
+
+    def assertTagVersion(version: String): Unit =
+      if (hasNoTags)
+        throw new RuntimeException(
+          s"Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: $version"
+        )
   }
 
   private[sbtdynver] def timestamp(d: Date): String           = f"$d%tY$d%tm$d%td-$d%tH$d%tM"
