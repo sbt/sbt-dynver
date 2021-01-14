@@ -79,7 +79,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   private val Distance     =  """\+([0-9]+)""".r
   private val Sha          =  """([0-9a-f]{8})""".r
   private val HEAD         =  """HEAD""".r
-  private val CommitSuffix = s"""($Distance-$Sha)""".r
+  private val CommitSuffix = s"""(?:$Distance-$Sha)""".r
   private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
 
   private[sbtdynver] final class Parser(tagPrefix: String) {
@@ -94,22 +94,16 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
 
     private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
-      case FromTag(tag, _, dist, sha, dirty) => parseWithTag(tag, dist, sha, dirty)
-      case FromSha(sha, dirty)               => parseWithRef(sha,    dirty)
-      case FromHead(dirty)                   => parseWithRef("HEAD", dirty)
+      case FromTag(tag, null, null, dirty) => mk(mkTag(tag),     GitCommitSuffix(0, ""),           GitDirtySuffix(if (dirty == null) "" else dirty))
+      case FromTag(tag, dist,  sha, dirty) => mk(mkTag(tag),     GitCommitSuffix(dist.toInt, sha), GitDirtySuffix(if (dirty == null) "" else dirty))
+      case FromSha(sha,             dirty) => mk(GitRef(sha),    GitCommitSuffix(0, ""),           GitDirtySuffix(if (dirty == null) "" else dirty))
+      case FromHead(                dirty) => mk(GitRef("HEAD"), GitCommitSuffix(0, ""),           GitDirtySuffix(dirty))
     }
 
-    private def parseWithTag(tag: String, dist: String, sha: String, dirty: String) = {
-      // the "value" of the GitTag is the entire string section, with the prefix
-      // but also keep the, user-customisable, prefix so dropPrefix knows what to drop
-      val gitTag = new GitTag(tagPrefix + tag, tagPrefix)
-      val commit = if (dist == null || sha == null) GitCommitSuffix(0, "") else GitCommitSuffix(dist.toInt, sha)
-      GitDescribeOutput(gitTag, commit, GitDirtySuffix(if (dirty eq null) "" else dirty))
-    }
+    private def mkTag(tag: String) = new GitTag(tagPrefix + tag, tagPrefix)
 
-    private def parseWithRef(ref: String, dirty: String) = {
-      GitDescribeOutput(GitRef(ref), GitCommitSuffix(0, ""), GitDirtySuffix(if (dirty eq null) "" else dirty))
-    }
+    private def mk(ref: GitRef, commitSuffix: GitCommitSuffix, dirtySuffix: GitDirtySuffix) =
+      GitDescribeOutput(ref, commitSuffix, dirtySuffix)
   }
 
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
