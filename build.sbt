@@ -33,7 +33,7 @@ val dynver = project.settings(
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.10.0.202012080955-r" % Test,
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.2"                % Test,
 
-  mimaSettings,
+  publishSettings,
 )
 
 import com.typesafe.tools.mima.core._, ProblemFilters._
@@ -44,7 +44,13 @@ val sbtdynver = project.dependsOn(dynverP).enablePlugins(SbtPlugin).settings(
   scriptedBufferLog    := true,
   scriptedDependencies := Seq(dynver / publishLocal, publishLocal).dependOn.value,
 
+  publishSettings,
+)
+
+lazy val publishSettings = Def.settings(
   mimaSettings,
+  bintrayPackage    := "sbt-dynver",  // keep publishing to the same place
+  bintrayRepository := "sbt-plugins",
 )
 
 lazy val mimaSettings = Seq(
