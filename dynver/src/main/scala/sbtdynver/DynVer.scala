@@ -6,7 +6,9 @@ import java.util._, regex.Pattern
 import scala.{ PartialFunction => ?=> }
 import scala.util._
 
-import scala.sys.process.{ Process, ProcessLogger }
+import scala.sys.process.Process
+
+import dynver._, impl.NoProcessLogger
 
 sealed case class GitRef(value: String)
 final case class GitCommitSuffix(distance: Int, sha: String)
@@ -153,13 +155,13 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
 
   def getDistanceToFirstCommit(): Option[Int] = {
     val process = Process(s"git rev-list --count HEAD", wd)
-    Try(process !! impl.NoProcessLogger).toOption
+    Try(process !! NoProcessLogger).toOption
       .map(_.trim.toInt)
   }
 
   def getGitDescribeOutput(d: Date): Option[GitDescribeOutput] = {
     val process = Process(s"git describe --long --tags --abbrev=8 --match $TagPattern --always --dirty=+${timestamp(d)}", wd)
-    Try(process !! impl.NoProcessLogger).toOption
+    Try(process !! NoProcessLogger).toOption
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(parser.parse)
       .flatMap(output =>
@@ -185,7 +187,7 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
   def fallback(d: Date): String = GitDescribeOutput.fallback(separator, d)
 
   private def execAndHandleEmptyOutput(cmd: String): Option[String] = {
-    Try(Process(cmd, wd) !! impl.NoProcessLogger).toOption
+    Try(Process(cmd, wd) !! NoProcessLogger).toOption
       .filter(_.trim.nonEmpty)
   }
 
@@ -198,13 +200,3 @@ object DynVer extends DynVer(None) with (Option[File] => DynVer) {
 }
 
 object `package`
-
-package impl {
-  object NoProcessLogger extends ProcessLogger {
-    def info(s: => String)  = ()
-    def out(s: => String)   = ()
-    def error(s: => String) = ()
-    def err(s: => String)   = ()
-    def buffer[T](f: => T)  = f
-  }
-}

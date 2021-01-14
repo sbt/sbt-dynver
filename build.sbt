@@ -56,6 +56,7 @@ import com.typesafe.tools.mima.core._, ProblemFilters._
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts   := Set(projID.value.withRevision("5.0.0-M2")),
   mimaBinaryIssueFilters ++= Seq(
+    ProblemFilters.exclude[Problem]("*.impl.*"), // impl is for internal implementation details
   ),
 )
 
