@@ -52,7 +52,7 @@ lazy val publishSettings = Def.settings(
   bintrayRepository := "sbt-plugins",
 )
 
-import com.typesafe.tools.mima.core._, ProblemFilters._
+import com.typesafe.tools.mima.core._
 lazy val mimaSettings = Seq(
   mimaPreviousArtifacts   := Set(projID.value.withRevision("5.0.0-M2")),
   mimaBinaryIssueFilters ++= Seq(

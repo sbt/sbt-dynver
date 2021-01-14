@@ -11,8 +11,8 @@ import scala.sys.process.Process
 import dynver._, impl.NoProcessLogger
 
 sealed case class GitRef(value: String)
-final case class GitCommitSuffix(distance: Int, sha: String)
-final case class GitDirtySuffix(value: String)
+final  case class GitCommitSuffix(distance: Int, sha: String)
+final  case class GitDirtySuffix(value: String)
 
 private final class GitTag(value: String, val prefix: String) extends GitRef(value) {
   override def toString = s"GitTag($value, prefix=$prefix)"
@@ -20,14 +20,13 @@ private final class GitTag(value: String, val prefix: String) extends GitRef(val
 
 object GitRef extends (String => GitRef) {
   final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
-    private def prefix = x match {
-      case x: GitTag => x.prefix
-      case _         => DynVer.tagPrefix
-    }
+    private def prefix = x match { case x: GitTag => x.prefix case _ => DynVer.tagPrefix }
 
     def isTag: Boolean     = value.startsWith(prefix)
     def dropPrefix: String = value.stripPrefix(prefix)
-    def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
+
+    def mkString(prefix: String, suffix: String): String =
+      if (value.isEmpty) "" else prefix + value + suffix
 
     @deprecated("Generalised to all prefixes, use dropPrefix (note it returns just the string)", "4.1.0")
     def dropV: GitRef = if (value.startsWith("v")) GitRef(value.stripPrefix("v")) else x
@@ -37,6 +36,7 @@ object GitRef extends (String => GitRef) {
 object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
   final implicit class GitCommitSuffixOps(val x: GitCommitSuffix) extends AnyVal { import x._
     def isEmpty: Boolean = distance <= 0 || sha.isEmpty
+
     def mkString(prefix: String, infix: String, suffix: String): String =
       if (sha.isEmpty) "" else prefix + distance + infix + sha + suffix
   }
@@ -44,9 +44,11 @@ object GitCommitSuffix extends ((Int, String) => GitCommitSuffix) {
 
 object GitDirtySuffix extends (String => GitDirtySuffix) {
   final implicit class GitDirtySuffixOps(val x: GitDirtySuffix) extends AnyVal { import x._
-    def dropPlus: GitDirtySuffix = GitDirtySuffix(value.replaceAll("^\\+", ""))
+    def dropPlus: GitDirtySuffix                 = GitDirtySuffix(value.replaceAll("^\\+", ""))
     def withSeparator(separator: String): String = dropPlus.mkString(separator, "")
-    def mkString(prefix: String, suffix: String): String = if (value.isEmpty) "" else prefix + value + suffix
+
+    def mkString(prefix: String, suffix: String): String =
+      if (value.isEmpty) "" else prefix + value + suffix
   }
 }
 
@@ -59,17 +61,17 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
   }
 
   def sonatypeVersion(sep: String): String = if (isSnapshot) version(sep) + "-SNAPSHOT" else version(sep)
+  def previousVersion: String              = ref.dropPrefix
 
-  def version: String            = version(DynVer.separator)
-  def sonatypeVersion: String    = sonatypeVersion(DynVer.separator)
+  def         version: String =         version(DynVer.separator)
+  def sonatypeVersion: String = sonatypeVersion(DynVer.separator)
 
-  def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty || isDirty()
-  def previousVersion: String    = ref.dropPrefix
+  def hasNoTags(): Boolean = !ref.isTag
+  def   isDirty(): Boolean = dirtySuffix.value.nonEmpty
+
   def isVersionStable(): Boolean = !isDirty()
-
-  def hasNoTags(): Boolean       = !ref.isTag
-  def isDirty(): Boolean         = dirtySuffix.value.nonEmpty
-  def isCleanAfterTag: Boolean   = ref.isTag && commitSuffix.isEmpty && !isDirty()
+  def isSnapshot(): Boolean      = hasNoTags() || !commitSuffix.isEmpty ||  isDirty()
+  def isCleanAfterTag: Boolean   = ref.isTag   &&  commitSuffix.isEmpty && !isDirty()
 }
 
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
@@ -113,50 +115,48 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
   implicit class OptGitDescribeOutputOps(val _x: Option[GitDescribeOutput]) extends AnyVal {
     def mkVersion(f: GitDescribeOutput => String, fallback: => String): String = _x.fold(fallback)(f)
 
-    def version(d: Date): String          = versionWithSep(d, DynVer.separator)
-    def sonatypeVersion(d: Date): String  = sonatypeVersionWithSep(d, DynVer.separator)
-
-    // overloading isn't bincompat :O
-    def versionWithSep(d: Date, sep: String): String         = mkVersion(_.version(sep), fallback(sep, d))
+    def         versionWithSep(d: Date, sep: String): String = mkVersion(_        .version(sep), fallback(sep, d))
     def sonatypeVersionWithSep(d: Date, sep: String): String = mkVersion(_.sonatypeVersion(sep), fallback(sep, d))
 
-    def previousVersion: Option[String]   = _x.map(_.previousVersion)
-    def isSnapshot: Boolean               = _x.forall(_.isSnapshot)
-    def isVersionStable: Boolean          = _x.exists(_.isVersionStable)
+    def         version(d: Date): String =         versionWithSep(d, DynVer.separator)
+    def sonatypeVersion(d: Date): String = sonatypeVersionWithSep(d, DynVer.separator)
 
-    def isDirty: Boolean         = _x.fold(true)(_.isDirty())
-    def hasNoTags: Boolean       = _x.fold(true)(_.hasNoTags())
+    def previousVersion: Option[String] = _x.map(_.previousVersion)
+
+    def hasNoTags: Boolean = _x.fold(true)(_.hasNoTags())
+    def isDirty: Boolean   = _x.fold(true)(_.isDirty())
+
+    def isSnapshot: Boolean      = _x.forall(_.isSnapshot)
+    def isVersionStable: Boolean = _x.exists(_.isVersionStable)
   }
 
-  private[sbtdynver] def timestamp(d: Date): String = "%1$tY%1$tm%1$td-%1$tH%1$tM" format d
+  private[sbtdynver] def timestamp(d: Date): String           = f"$d%tY$d%tm$d%td-$d%tH$d%tM"
   private[sbtdynver] def fallback(separator: String, d: Date) = s"HEAD$separator${timestamp(d)}"
 }
 
-// sealed just so the companion object can extend it. Shouldn't've been a case class.
 sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String) {
   private def this(wd: Option[File], separator: String, vTagPrefix: Boolean) = this(wd, separator, if (vTagPrefix) "v" else "")
   private def this(wd: Option[File], separator: String) = this(wd, separator, true)
   private def this(wd: Option[File]) = this(wd, "+")
 
-  def vTagPrefix = tagPrefix == "v" // bincompat
+  def vTagPrefix = tagPrefix == "v"
 
-  private val TagPattern = s"$tagPrefix[0-9]*" // used by `git describe` to filter the tags
+  private val TagPattern        = s"$tagPrefix[0-9]*" // used by `git describe` to filter the tags
   private[sbtdynver] val parser = new GitDescribeOutput.Parser(tagPrefix) // .. then parsed back
 
-  def version(d: Date): String            = getGitDescribeOutput(d).versionWithSep(d, separator)
+  def         version(d: Date): String    = getGitDescribeOutput(d).versionWithSep(d, separator)
   def sonatypeVersion(d: Date): String    = getGitDescribeOutput(d).sonatypeVersionWithSep(d, separator)
-  def previousVersion : Option[String]    = getGitPreviousStableTag.previousVersion
+  def previousVersion: Option[String]     = getGitPreviousStableTag.previousVersion
   def isSnapshot(): Boolean               = getGitDescribeOutput(new Date).isSnapshot
   def isVersionStable(): Boolean          = getGitDescribeOutput(new Date).isVersionStable
 
-  def makeDynVer(d: Date): Option[String] = getGitDescribeOutput(d) map (_.version(separator))
+  def makeDynVer(d: Date): Option[String] = getGitDescribeOutput(d).map(_.version(separator))
   def isDirty(): Boolean                  = getGitDescribeOutput(new Date).isDirty
   def hasNoTags(): Boolean                = getGitDescribeOutput(new Date).hasNoTags
 
   def getDistanceToFirstCommit(): Option[Int] = {
     val process = Process(s"git rev-list --count HEAD", wd)
-    Try(process !! NoProcessLogger).toOption
-      .map(_.trim.toInt)
+    Try(process !! NoProcessLogger).toOption.map(_.trim.toInt)
   }
 
   def getGitDescribeOutput(d: Date): Option[GitDescribeOutput] = {
@@ -184,7 +184,7 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
   }
 
   def timestamp(d: Date): String = GitDescribeOutput.timestamp(d)
-  def fallback(d: Date): String = GitDescribeOutput.fallback(separator, d)
+  def fallback(d: Date): String  = GitDescribeOutput.fallback(separator, d)
 
   private def execAndHandleEmptyOutput(cmd: String): Option[String] = {
     Try(Process(cmd, wd) !! NoProcessLogger).toOption
@@ -196,7 +196,7 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
 
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
   override def apply(wd: Option[File]) = new DynVer(wd)
-  def apply(wd: Option[File], separator: String, vTagPrefix: Boolean) = new DynVer(wd, separator, vTagPrefix) // bincompat
+  def apply(wd: Option[File], separator: String, vTagPrefix: Boolean) = new DynVer(wd, separator, vTagPrefix)
 }
 
 object `package`
