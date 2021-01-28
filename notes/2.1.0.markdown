@@ -1,8 +1,0 @@
-### Improvements
-
-* Fixes dynver's behaviour when there are multiple builds (e.g with source dependencies). [#57][] by [@jvican][]
-
-[#57]: https://github.com/dwijnand/sbt-dynver/pull/57
-[@jvican]: https://github.com/jvican
-
-https://github.com/dwijnand/sbt-dynver/compare/v2.0.0...v2.1.0
