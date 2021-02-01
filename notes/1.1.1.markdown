@@ -1,8 +1,0 @@
-### Bug Fixes
-
-- Fixes a bug where git output on Windows threw a MatchError (CR+LF). [#20][]/[#21][] by [@dwijnand][]
-
-  [#20]: https://github.com/dwijnand/sbt-dynver/issues/20
-  [#21]: https://github.com/dwijnand/sbt-dynver/pull/21
-
-  [@dwijnand]: https://github.com/dwijnand

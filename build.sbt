@@ -1,6 +1,5 @@
 val dynverRoot = project.in(file("."))
-val dynverP = LocalProject("dynver")
-aggregateProjects(dynverP, sbtdynver)
+aggregateProjects(dynverLib, sbtdynver)
 
 inThisBuild(List(
   organization := "com.dwijnand",
@@ -29,44 +28,30 @@ inThisBuild(List(
   Test / parallelExecution := true,
 ))
 
-val dynver = project.settings(
+val dynverLib = LocalProject("dynver")
+val dynver    = project.settings(
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.10.0.202012080955-r" % Test,
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.2"                % Test,
-
+  resolvers           += Resolver.sbtPluginRepo("releases"), // for prev artifacts, not repo1 b/c of mergly publishing
   publishSettings,
+  publishMavenStyle   := false, // so it's resolved out of sbt-plugin-releases as a dep of sbt-dynver
 )
 
-val sbtdynver = project.dependsOn(dynverP).enablePlugins(SbtPlugin).settings(
-  name := "sbt-dynver",
-
-  scriptedLaunchOpts  ++= Seq("-Xmx1024M", "-XX:MaxPermSize=256M", "-Dplugin.version=" + version.value),
+val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
+                  name := "sbt-dynver",
   scriptedBufferLog    := true,
   scriptedDependencies := Seq(dynver / publishLocal, publishLocal).dependOn.value,
-
+  scriptedLaunchOpts   += s"-Dplugin.version=${version.value}",
+  scriptedLaunchOpts   += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   publishSettings,
 )
 
 lazy val publishSettings = Def.settings(
-  mimaSettings,
-  bintrayPackage    := "sbt-dynver",  // keep publishing to the same place
-  bintrayRepository := "sbt-plugins",
+  MimaSettings.mimaSettings,
+  bintrayPackage      := "sbt-dynver",  // keep publishing to the same place
+  bintrayRepository   := "sbt-plugins",
+  bintray / resolvers := Nil, // disable getting my bintray repo through my local credentials; be like CI
 )
-
-import com.typesafe.tools.mima.core._
-lazy val mimaSettings = Seq(
-  mimaPreviousArtifacts   := Set(projID.value.withRevision("5.0.0-M2")),
-  mimaBinaryIssueFilters ++= Seq(
-    ProblemFilters.exclude[Problem]("*.impl.*"), // impl is for internal implementation details
-  ),
-)
-
-lazy val projID = Def.setting {
-  // Using projectID something is wrong... Looks for dynver_2.12 but artifacts are name=dynver
-  val sbtBv = (pluginCrossBuild /   sbtBinaryVersion).value
-  val sbv   = (pluginCrossBuild / scalaBinaryVersion).value
-  val mid   = organization.value %% moduleName.value % "0.0.0"
-  if (sbtPlugin.value) Defaults.sbtPluginExtra(mid, sbtBv, sbv) else mid
-}
 
 mimaPreviousArtifacts := Set.empty
 publish / skip        := true
