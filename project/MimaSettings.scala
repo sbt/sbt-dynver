@@ -7,7 +7,7 @@ import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object MimaSettings {
   // clear out mimaBinaryIssueFilters when changing this
-  val mimaPreviousVersion = "5.0.0-M2"
+  val mimaPreviousVersion = "5.0.0-M3"
 
   val projID = Def.setting {
     // Using projectID something is wrong... Looks for dynver_2.12 but artifacts are name=dynver
