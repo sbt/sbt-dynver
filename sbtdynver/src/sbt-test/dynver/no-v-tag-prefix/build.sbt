@@ -1,1 +1,1 @@
-dynverVTagPrefix in ThisBuild := false
+ThisBuild / dynverVTagPrefix := false

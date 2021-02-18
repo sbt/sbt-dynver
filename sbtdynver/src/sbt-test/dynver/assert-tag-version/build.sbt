@@ -1,4 +1,4 @@
-onLoad in Global := (onLoad in Global).value.andThen { s =>
+Global / onLoad := (Global / onLoad).value.andThen { s =>
   dynverAssertTagVersion.value
   s
 }

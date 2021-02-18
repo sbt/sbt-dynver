@@ -1,6 +1,6 @@
 import scala.sys.process.stringToProcess
 
-dynverTagPrefix in ThisBuild := "bar-v"
+ThisBuild / dynverTagPrefix := "bar-v"
 
 def tstamp = Def.setting(sbtdynver.DynVer timestamp dynverCurrentDate.value)
 def headSha = {

@@ -73,5 +73,5 @@ object DynVerPlugin extends AutoPlugin {
       sys.error(s"Version and dynver mismatch - version: $v, dynver: $dv")
   }
 
-  private val buildBase = baseDirectory in ThisBuild
+  private val buildBase = ThisBuild / baseDirectory
 }
