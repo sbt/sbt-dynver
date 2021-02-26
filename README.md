@@ -40,7 +40,7 @@ Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 
 ## Detail
 
-`version in ThisBuild`, `isSnapshot in ThisBuild` and `isVersionStable in ThisBuild` will be automatically set to:
+`ThisBuild / version`, `ThisBuild / isSnapshot` and `ThisBuild / isVersionStable` will be automatically set to:
 
 ```
 | tag    | dist | HEAD sha | dirty | version                        | isSnapshot | isVersionStable |
@@ -68,7 +68,7 @@ Given the following git history, here's what `previousStableVersion` returns whe
 *   (untagged)             --> Some("1.0.0")
 | * (tagged: v2.1.0)       --> Some("2.0.0")
 | * (tagged: v2.0.0)       --> Some("1.0.0")
-|/  
+|/
 *   (tagged: v1.0.0)       --> None
 *   (untagged)             --> None
 ```
@@ -92,13 +92,13 @@ If you're not seeing what you expect, then either start with this:
 
     git tag -a v0.0.1 -m "Initial version tag for sbt-dynver"
 
-or change the value of `dynverVTagPrefix in ThisBuild` to remove the requirement for the v-prefix:
+or change the value of `ThisBuild / dynverVTagPrefix` to remove the requirement for the v-prefix:
 
-    dynverVTagPrefix in ThisBuild := false
+    ThisBuild / dynverVTagPrefix := false
 
-or, more generally, use `dynverTagPrefix in ThisBuild` to fully customising tag prefixes, for example:
+or, more generally, use `ThisBuild / dynverTagPrefix` to fully customising tag prefixes, for example:
 
-    dynverTagPrefix in ThisBuild := "foo-" // our tags have the format foo-<version>, e.g. foo-1.2.3
+    ThisBuild / dynverTagPrefix := "foo-" // our tags have the format foo-<version>, e.g. foo-1.2.3
 
 ## Tasks
 
@@ -110,29 +110,29 @@ or, more generally, use `dynverTagPrefix in ThisBuild` to fully customising tag 
 
 ## Publishing to Sonatype's snapshots repository (aka "Sonatype mode")
 
-If you're publishing to Sonatype sonashots then enable `dynverSonatypeSnapshots in ThisBuild := true` to append
+If you're publishing to Sonatype sonashots then enable `ThisBuild / dynverSonatypeSnapshots := true` to append
 "-SNAPSHOT" to the version if `isSnapshot` is `true` (which it is unless building on a tag with no local
 changes).  This opt-in exists because the Sonatype's snapshots repository requires all versions to end with
 `-SNAPSHOT`.
 
 ## Portable version strings
 
-The default version string format includes `+` characters, which is an escape character in URL and is not compatible with docker tags. 
+The default version string format includes `+` characters, which is an escape character in URL and is not compatible with docker tags.
 This character can be overridden by setting:
 
 ```scala
-dynverSeparator in ThisBuild := "-"
+ThisBuild / dynverSeparator := "-"
 ```
 
 ## Custom version string
 
 Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
 
-For simple cases you can customise a version by simply post-processing the value of `version in ThisBuild` (and optionally `dynver in ThisBuild`), for example by replacing '+' with '-' (emulating the docker support mentioned above):
+For simple cases you can customise a version by simply post-processing the value of `ThisBuild / version` (and optionally `ThisBuild / dynver`), for example by replacing '+' with '-' (emulating the docker support mentioned above):
 
 ```scala
-version in ThisBuild ~= (_.replace('+', '-'))
- dynver in ThisBuild ~= (_.replace('+', '-'))
+ThisBuild / version ~= (_.replace('+', '-'))
+ThisBuild / dynver  ~= (_.replace('+', '-'))
 ```
 
 To completely customise the string format you can use `dynverGitDescribeOutput`, `dynverCurrentDate` and `sbtdynver.DynVer`, like so:
@@ -201,23 +201,7 @@ Global / onLoad := (Global / onLoad).value.andThen { s =>
 
 ### How do I make previousStableVersion return None for major version branches?
 
-Deciding whether going from one version to another is a "breaking change" is out of scope for this project. 
+Deciding whether going from one version to another is a "breaking change" is out of scope for this project.
 If you have binary compatibility check setup using `previousStableVersion` in CI
-and want to skip the check for major version branches (e.g. `1.x` vs `2.x`), see https://github.com/dwijnand/sbt-dynver/issues/70#issuecomment-458620722 
+and want to skip the check for major version branches (e.g. `1.x` vs `2.x`), see https://github.com/dwijnand/sbt-dynver/issues/70#issuecomment-458620722
 for the recommended solution.
-
-## Licence
-
-Copyright 2016-2017 Dale Wijnand
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.

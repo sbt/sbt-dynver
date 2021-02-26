@@ -10,8 +10,8 @@ inThisBuild(List(
       homepage := scmInfo.value map (_.browseUrl),
        scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git")),
 
-            Global /      sbtVersion  := "1.0.0", // must be Global, otherwise ^^ won't change anything
-  LocalRootProject / crossSbtVersions := List("1.0.0"),
+            Global /      sbtVersion  := "1.1.0", // must be Global, otherwise ^^ won't change anything
+  LocalRootProject / crossSbtVersions := List("1.1.0"),
 
   scalaVersion := "2.12.12",
 

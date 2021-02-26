@@ -3,7 +3,7 @@ dependsOn(RootProject(file("bar")))
 def check(a: String, e: String) = assert(a == e, s"Version mismatch: Expected $e, Incoming $a")
 
 TaskKey[Unit]("checkOnTagFoo") := check(version.value, "1.0.0")
-TaskKey[Unit]("checkOnTagBar") := check((version in RootProject(file("bar"))).value, "2.0.0")
+TaskKey[Unit]("checkOnTagBar") := check((RootProject(file("bar")) / version).value, "2.0.0")
 
 import sbt.complete.DefaultParsers._
 
