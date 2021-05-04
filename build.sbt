@@ -31,7 +31,7 @@ inThisBuild(List(
 val dynverLib = LocalProject("dynver")
 val dynver    = project.settings(
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.11.0.202103091610-r" % Test,
-  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.3"                % Test,
+  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.4"                % Test,
   resolvers           += Resolver.sbtPluginRepo("releases"), // for prev artifacts, not repo1 b/c of mergly publishing
   publishSettings,
   publishMavenStyle   := false, // so it's resolved out of sbt-plugin-releases as a dep of sbt-dynver
