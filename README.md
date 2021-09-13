@@ -1,12 +1,4 @@
-# [sbt-dynver][] [![travis-badge][]][travis] [![gitter-badge][]][gitter] [![release-badge][]][release]
-
-[sbt-dynver]:                       https://github.com/dwijnand/sbt-dynver
-[travis]:                        https://travis-ci.org/dwijnand/sbt-dynver
-[travis-badge]:                  https://travis-ci.org/dwijnand/sbt-dynver.svg?branch=master
-[gitter]:                            https://gitter.im/dwijnand/sbt-dynver
-[gitter-badge]:               https://badges.gitter.im/dwijnand/sbt-dynver.svg
-[release]:                          https://github.com/dwijnand/sbt-dynver/releases/latest
-[release-badge]: https://img.shields.io/github/release/dwijnand/sbt-dynver.svg
+# sbt-dynver
 
 `sbt-dynver` is an [sbt](http://www.scala-sbt.org/) plugin to dynamically set your version from git.
 
