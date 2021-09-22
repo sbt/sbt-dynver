@@ -13,7 +13,7 @@ inThisBuild(List(
             Global /      sbtVersion  := "1.1.0", // must be Global, otherwise ^^ won't change anything
   LocalRootProject / crossSbtVersions := List("1.1.0"),
 
-  scalaVersion := "2.12.14",
+  scalaVersion := "2.12.15",
 
   scalacOptions ++= Seq("-encoding", "utf8"),
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlint"),
