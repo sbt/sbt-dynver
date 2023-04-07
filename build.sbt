@@ -2,18 +2,18 @@ val dynverRoot = project.in(file("."))
 aggregateProjects(dynverLib, sbtdynver)
 
 inThisBuild(List(
-  organization := "com.dwijnand",
+  organization := "com.github.sbt",
       licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
    description := "An sbt plugin to dynamically set your version from git",
     developers := List(Developer("dwijnand", "Dale Wijnand", "dale wijnand gmail com", url("https://dwijnand.com"))),
      startYear := Some(2016),
       homepage := scmInfo.value map (_.browseUrl),
-       scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git")),
+       scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-dynver"), "scm:git:git@github.com:sbt/sbt-dynver.git")),
 
             Global /      sbtVersion  := "1.1.0", // must be Global, otherwise ^^ won't change anything
   LocalRootProject / crossSbtVersions := List("1.1.0"),
 
-  scalaVersion := "2.12.15",
+  scalaVersion := "2.12.17",
 
   scalacOptions ++= Seq("-encoding", "utf8"),
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlint"),
@@ -34,7 +34,6 @@ val dynver    = project.settings(
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.4"                % Test,
   resolvers           += Resolver.sbtPluginRepo("releases"), // for prev artifacts, not repo1 b/c of mergly publishing
   publishSettings,
-  publishMavenStyle   := false, // so it's resolved out of sbt-plugin-releases as a dep of sbt-dynver
 )
 
 val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
@@ -48,9 +47,6 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
 
 lazy val publishSettings = Def.settings(
   MimaSettings.mimaSettings,
-  bintrayPackage      := "sbt-dynver",  // keep publishing to the same place
-  bintrayRepository   := "sbt-plugins",
-  bintray / resolvers := Nil, // disable getting my bintray repo through my local credentials; be like CI
 )
 
 mimaPreviousArtifacts := Set.empty

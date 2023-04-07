@@ -18,7 +18,9 @@ Features:
 
 Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/dynver.sbt`:
 
-    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "x.y.z")
+    addSbtPlugin("com.github.sbt" % "sbt-dynver" % "x.y.z")
+    // Until version 4.1.1:
+    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 
 The latest release is: [![release-badge][]][release]
 
@@ -195,5 +197,5 @@ Global / onLoad := (Global / onLoad).value.andThen { s =>
 
 Deciding whether going from one version to another is a "breaking change" is out of scope for this project.
 If you have binary compatibility check setup using `previousStableVersion` in CI
-and want to skip the check for major version branches (e.g. `1.x` vs `2.x`), see https://github.com/dwijnand/sbt-dynver/issues/70#issuecomment-458620722
+and want to skip the check for major version branches (e.g. `1.x` vs `2.x`), see https://github.com/sbt/sbt-dynver/issues/70#issuecomment-458620722
 for the recommended solution.
