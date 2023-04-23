@@ -10,24 +10,17 @@ on:
 
 jobs:
   publish-artifacts:
-    name: JDK 8
     runs-on: ubuntu-22.04
     if: ${{ github.repository_owner == 'sbt' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
-          # we don't know what commit the last tag was it's safer to get entire repo so previousStableVersion resolves
           fetch-depth: 0
-
-      - name: Coursier Cache
-        id: coursier-cache
-        uses: coursier/cache-action@v6
-
-      - name: Install Adoptium Temurin OpenJDK
-        uses: coursier/setup-action@v1
+      - uses: actions/setup-java@v3
         with:
-          jvm: adoptium:8
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'sbt'
 
       - name: Publish artifacts
         run: sbt ci-release
@@ -36,11 +29,3 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
-
-      - name: Cleanup before cache
-        shell: bash
-        run: |
-          find $HOME/Library/Caches/Coursier/v1        -name "ivydata-*.properties" -delete || true
-          find $HOME/.ivy2/cache                       -name "ivydata-*.properties" -delete || true
-          find $HOME/.cache/coursier/v1                -name "ivydata-*.properties" -delete || true
-          find $HOME/.sbt                              -name "*.lock"               -delete || true
