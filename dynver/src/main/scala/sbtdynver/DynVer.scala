@@ -3,7 +3,7 @@ package sbtdynver
 import java.io.File
 import java.util._, regex.Pattern
 
-import scala.{ PartialFunction => ?=> }
+import scala.PartialFunction
 import scala.util._
 
 import scala.sys.process.Process
@@ -58,7 +58,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
     else ref.dropPrefix + commitSuffix.mkString(sep, "-", "") + dirtySuffix.withSeparator(sep)
   }
 
-  def sonatypeVersion(sep: String): String = if (isSnapshot) version(sep) + "-SNAPSHOT" else version(sep)
+  def sonatypeVersion(sep: String): String = if (isSnapshot()) version(sep) + "-SNAPSHOT" else version(sep)
   def previousVersion: String              = ref.dropPrefix
 
   def         version: String =         version(DynVer.separator)
@@ -91,7 +91,7 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     private val FromSha  = s"""^$OptWs$Sha$TstampSuffix?$OptWs$$""".r
     private val FromHead = s"""^$OptWs$HEAD$TstampSuffix$OptWs$$""".r
 
-    private[sbtdynver] def parse: String ?=> GitDescribeOutput = {
+    private[sbtdynver] def parse: String PartialFunction GitDescribeOutput = {
       case FromTag(tag, null, null, dirty) => mk(mkTag(tag),     GitCommitSuffix(0, ""),           GitDirtySuffix(if (dirty == null) "" else dirty))
       case FromTag(tag, dist,  sha, dirty) => mk(mkTag(tag),     GitCommitSuffix(dist.toInt, sha), GitDirtySuffix(if (dirty == null) "" else dirty))
       case FromSha(sha,             dirty) => mk(GitRef(sha),    GitCommitSuffix(0, ""),           GitDirtySuffix(if (dirty == null) "" else dirty))
@@ -121,8 +121,8 @@ object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => G
     def hasNoTags: Boolean = _x.fold(true)(_.hasNoTags())
     def isDirty: Boolean   = _x.fold(true)(_.isDirty())
 
-    def isSnapshot: Boolean      = _x.forall(_.isSnapshot)
-    def isVersionStable: Boolean = _x.exists(_.isVersionStable)
+    def isSnapshot: Boolean      = _x.forall(_.isSnapshot())
+    def isVersionStable: Boolean = _x.exists(_.isVersionStable())
 
     def assertTagVersion(version: String): Unit =
       if (hasNoTags)
@@ -166,7 +166,7 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
       .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
       .map(parser.parse)
       .flatMap { out =>
-        if (out.hasNoTags)
+        if (out.hasNoTags())
           getDistanceToFirstCommit().map { distance =>
             GitDescribeOutput(GitRef("0.0.0"), GitCommitSuffix(distance, out.ref.value), out.dirtySuffix)
           }
@@ -192,8 +192,6 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
     Try(Process(cmd, wd) !! NoProcessLogger).toOption
       .filter(_.trim.nonEmpty)
   }
-
-  def copy(wd: Option[File] = wd): DynVer = new DynVer(wd, separator, tagPrefix)
 }
 
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
