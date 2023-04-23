@@ -1,6 +1,9 @@
 val dynverRoot = project.in(file("."))
 aggregateProjects(dynverLib, sbtdynver)
 
+lazy val scala2_12 = "2.12.17"
+lazy val scala2_13 = "2.13.10"
+lazy val scala3    = "3.2.2"
 lazy val scalacOptions212 = Seq(
   "-Xlint",
   "-Xfuture",
@@ -11,6 +14,7 @@ lazy val scalacOptions212 = Seq(
 )
 
 inThisBuild(List(
+  scalaVersion := scala2_12,
   organization := "com.github.sbt",
       licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
    description := "An sbt plugin to dynamically set your version from git",
@@ -18,11 +22,6 @@ inThisBuild(List(
      startYear := Some(2016),
       homepage := scmInfo.value map (_.browseUrl),
        scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-dynver"), "scm:git:git@github.com:sbt/sbt-dynver.git")),
-
-            Global /      sbtVersion  := "1.1.0", // must be Global, otherwise ^^ won't change anything
-  LocalRootProject / crossSbtVersions := List("1.1.0"),
-
-  scalaVersion := "2.12.17",
 
   scalacOptions ++= Seq(
     "-encoding",
@@ -42,12 +41,11 @@ val dynver    = project.settings(
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.4"                % Test,
   resolvers           += Resolver.sbtPluginRepo("releases"), // for prev artifacts, not repo1 b/c of mergly publishing
   publishSettings,
-  crossScalaVersions ++= Seq("2.13.10", "3.2.2"),
+  crossScalaVersions ++= Seq(scala2_13, scala3),
   scalacOptions := {
-    if (scalaVersion.value.startsWith("3") || scalaVersion.value.startsWith("2.13")) {
-      scalacOptions.value.filterNot(scalacOptions212.contains(_))
-    } else {
-      scalacOptions.value
+    scalaBinaryVersion.value match {
+      case "3" | "2.13" => scalacOptions.value.filterNot(scalacOptions212.contains(_))
+      case _            => scalacOptions.value
     }
   }
 )
@@ -58,6 +56,11 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   scriptedDependencies := Seq(dynver / publishLocal, publishLocal).dependOn.value,
   scriptedLaunchOpts   += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts   += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
+  (pluginCrossBuild / sbtVersion) := {
+    scalaBinaryVersion.value match {
+      case "2.12" => "1.1.0"
+    }
+  },
   publishSettings,
 )
 
@@ -67,6 +70,4 @@ lazy val publishSettings = Def.settings(
 
 mimaPreviousArtifacts := Set.empty
 publish / skip        := true
-
-Global / excludeLintKeys += crossSbtVersions // Used by the "^" command (PluginCrossCommand)
 Global / cancelable      := true
