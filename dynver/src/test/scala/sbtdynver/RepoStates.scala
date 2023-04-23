@@ -35,7 +35,7 @@ sealed class RepoStates(tagPrefix: String) {
     var git: Git = _
     var sha      = "undefined"
 
-    def init         = andThis(git = Git.init.setDirectory(dir).call())
+    def init         = andThis { git = Git.init.setDirectory(dir).call() }
     def dirty        = {
       // We randomize the content added otherwise we will get the same git hash for two separate commits
       // because our commits are made at almost the same time
@@ -73,8 +73,8 @@ sealed class RepoStates(tagPrefix: String) {
     def version         = dynver.        version(date).replaceAllLiterally(sha, "1234abcd")
     def sonatypeVersion = dynver.sonatypeVersion(date).replaceAllLiterally(sha, "1234abcd")
     def previousVersion = dynver.previousVersion
-    def isSnapshot      = dynver.isSnapshot
-    def isVersionStable = dynver.isVersionStable
+    def isSnapshot      = dynver.isSnapshot()
+    def isVersionStable = dynver.isVersionStable()
 
     private def doalso[A, U](x: A)(xs: U*)  = x
     private def doto[A, U](x: A)(f: A => U) = doalso(x)(f(x))
