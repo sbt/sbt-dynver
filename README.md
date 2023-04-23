@@ -18,7 +18,9 @@ Features:
 
 Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/dynver.sbt`:
 
-    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "x.y.z")
+    addSbtPlugin("com.github.sbt" % "sbt-dynver" % "x.y.z")
+    // Until version 4.1.1:
+    addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 
 The latest release is: [![release-badge][]][release]
 
