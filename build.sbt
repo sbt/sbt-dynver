@@ -38,7 +38,7 @@ inThisBuild(List(
 val dynverLib = LocalProject("dynver")
 val dynver    = project.settings(
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.12.0.202106070339-r" % Test,
-  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.4"                % Test,
+  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.17.0"                % Test,
   resolvers           += Resolver.sbtPluginRepo("releases"), // for prev artifacts, not repo1 b/c of mergly publishing
   publishSettings,
   crossScalaVersions ++= Seq(scala2_13, scala3),
