@@ -1,28 +1,35 @@
 val dynverRoot = project.in(file("."))
 aggregateProjects(dynverLib, sbtdynver)
 
+lazy val scala2_12 = "2.12.17"
+lazy val scala2_13 = "2.13.10"
+lazy val scala3    = "3.2.2"
+lazy val scalacOptions212 = Seq(
+  "-Xlint",
+  "-Xfuture",
+  "-Ywarn-dead-code",
+  "-Ywarn-numeric-widen",
+  "-Ywarn-value-discard",
+  "-Yno-adapted-args",
+)
+
 inThisBuild(List(
-  organization := "com.dwijnand",
+  scalaVersion := scala2_12,
+  organization := "com.github.sbt",
       licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
    description := "An sbt plugin to dynamically set your version from git",
     developers := List(Developer("dwijnand", "Dale Wijnand", "dale wijnand gmail com", url("https://dwijnand.com"))),
      startYear := Some(2016),
       homepage := scmInfo.value map (_.browseUrl),
-       scmInfo := Some(ScmInfo(url("https://github.com/dwijnand/sbt-dynver"), "scm:git:git@github.com:dwijnand/sbt-dynver.git")),
+       scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-dynver"), "scm:git:git@github.com:sbt/sbt-dynver.git")),
 
-            Global /      sbtVersion  := "1.1.0", // must be Global, otherwise ^^ won't change anything
-  LocalRootProject / crossSbtVersions := List("1.1.0"),
-
-  scalaVersion := "2.12.15",
-
-  scalacOptions ++= Seq("-encoding", "utf8"),
-  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xlint"),
-  scalacOptions  += "-Xfuture",
-  scalacOptions  += "-Yno-adapted-args",
-  scalacOptions  += "-Ywarn-dead-code",
-  scalacOptions  += "-Ywarn-numeric-widen",
-  scalacOptions  += "-Ywarn-value-discard",
-
+  scalacOptions ++= Seq(
+    "-encoding",
+    "utf8",
+    "-deprecation",
+    "-feature",
+    "-unchecked",
+  ) ++ scalacOptions212,
   Test /              fork := false,
   Test /       logBuffered := false,
   Test / parallelExecution := true,
@@ -31,10 +38,16 @@ inThisBuild(List(
 val dynverLib = LocalProject("dynver")
 val dynver    = project.settings(
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.13.1.202206130422-r" % Test,
-  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.15.4"                % Test,
+  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.17.0"                % Test,
   resolvers           += Resolver.sbtPluginRepo("releases"), // for prev artifacts, not repo1 b/c of mergly publishing
   publishSettings,
-  publishMavenStyle   := false, // so it's resolved out of sbt-plugin-releases as a dep of sbt-dynver
+  crossScalaVersions ++= Seq(scala2_13, scala3),
+  scalacOptions := {
+    scalaBinaryVersion.value match {
+      case "3" | "2.13" => scalacOptions.value.filterNot(scalacOptions212.contains(_))
+      case _            => scalacOptions.value
+    }
+  }
 )
 
 val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
@@ -43,18 +56,18 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   scriptedDependencies := Seq(dynver / publishLocal, publishLocal).dependOn.value,
   scriptedLaunchOpts   += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts   += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
+  (pluginCrossBuild / sbtVersion) := {
+    scalaBinaryVersion.value match {
+      case "2.12" => "1.1.0"
+    }
+  },
   publishSettings,
 )
 
 lazy val publishSettings = Def.settings(
   MimaSettings.mimaSettings,
-  bintrayPackage      := "sbt-dynver",  // keep publishing to the same place
-  bintrayRepository   := "sbt-plugins",
-  bintray / resolvers := Nil, // disable getting my bintray repo through my local credentials; be like CI
 )
 
 mimaPreviousArtifacts := Set.empty
 publish / skip        := true
-
-Global / excludeLintKeys += crossSbtVersions // Used by the "^" command (PluginCrossCommand)
 Global / cancelable      := true
