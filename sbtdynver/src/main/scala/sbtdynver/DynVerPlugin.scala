@@ -51,27 +51,27 @@ object DynVerPlugin extends AutoPlugin {
     dynverAssertVersion    := assertVersionImpl.value,
   )
 
-  private val getVersion = Def.setting { (date: Date, out: Option[GitDescribeOutput]) =>
+  private lazy val getVersion = Def.setting { (date: Date, out: Option[GitDescribeOutput]) =>
     out.getVersion(date, dynverSeparator.value, dynverSonatypeSnapshots.value)
   }
 
-  private val tagPrefix = Def.setting {
+  private lazy val tagPrefix = Def.setting {
     val vTagPrefix = dynverVTagPrefix.value
     val  tagPrefix = dynverTagPrefix.?.value.getOrElse(if (vTagPrefix) "v" else "")
     assert(vTagPrefix ^ tagPrefix != "v", s"Incoherence: dynverTagPrefix=$tagPrefix vs dynverVTagPrefix=$vTagPrefix")
     tagPrefix
   }
 
-  private val assertTagVersion = Def.setting {
+  private lazy val assertTagVersion = Def.setting {
     dynverGitDescribeOutput.value.assertTagVersion(version.value)
   }
 
-  private val assertVersionImpl = Def.task {
+  private lazy val assertVersionImpl = Def.task {
     val v = version.value
     val dv = dynver.value
     if (!dynverCheckVersion.value)
       sys.error(s"Version and dynver mismatch - version: $v, dynver: $dv")
   }
 
-  private val buildBase = ThisBuild / baseDirectory
+  private lazy val buildBase = ThisBuild / baseDirectory
 }
