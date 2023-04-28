@@ -1,5 +1,10 @@
 import scala.sys.process.stringToProcess
 
+Global / onLoad := (Global / onLoad).value.andThen { s =>
+  dynverAssertTagVersion.value
+  s
+}
+
 def versionFmt(out: sbtdynver.GitDescribeOutput): String = {
   val dirtySuffix = out.dirtySuffix.dropPlus.mkString("-", "")
   if (out.isCleanAfterTag) out.ref.dropV.value + dirtySuffix // no commit info if clean after tag
