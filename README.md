@@ -4,15 +4,14 @@
 
 Inspired by:
 * The way that Mercurial [versions itself](https://selenic.com/hg/file/3.9.1/setup.py#l179)
-* The [GitVersioning][] AutoPlugin in [sbt-git][].
+* The
+  [GitVersioning](https://github.com/sbt/sbt-git/blob/v0.8.5/src/main/scala/com/typesafe/sbt/SbtGit.scala#L266-L270)
+  AutoPlugin in [sbt-git](https://github.com/sbt/sbt-git).
 
 Features:
 * Dynamically set your version by looking at the closest tag to the current commit
 * Detect the previous version
     * Useful for automatic [binary compatibility checks](https://github.com/lightbend/migration-manager) across library versions
-
-[sbt-git]: https://github.com/sbt/sbt-git
-[GitVersioning]: https://github.com/sbt/sbt-git/blob/v0.8.5/src/main/scala/com/typesafe/sbt/SbtGit.scala#L266-L270
 
 ## Setup
 
@@ -22,13 +21,24 @@ Add this to your sbt build plugins, in either `project/plugins.sbt` or `project/
     // Until version 4.1.1:
     addSbtPlugin("com.dwijnand" % "sbt-dynver" % "4.1.1")
 
-The latest release is: [![release-badge][]][release]
+The latest release is: [![dynver Scala version support](https://index.scala-lang.org/sbt/sbt-dynver/dynver/latest.svg)](https://index.scala-lang.org/sbt/sbt-dynver/dynver)
 
 Then make sure to **NOT set the version setting**, otherwise you will override `sbt-dynver`.
 
-In CI, you may need to run `git fetch --unshallow` (or, sometimes, `git fetch --depth=10000`), to avoid
-situations where a shallow clone will result in the last tag not being fetched.  Additionally `git fetch --tags`
-if the repo is cloned with `--no-tags`.
+In CI, if you're using GitHub Actions and
+[actions/checkout](https://github.com/actions/checkout) you may need to use
+`fetch-depth: 0` to avoid situations where a shallow clone will result in the
+last tag not being fetched.
+
+```yaml
+  - uses: actions/checkout@v3
+    with:
+      fetch-depth: 0
+```
+
+If you're manually running git commands then you may need to run `git fetch
+--unshallow` (or, sometimes, `git fetch --depth=10000`). Additionally `git fetch
+--tags` if the repo is cloned with `--no-tags`.
 
 Other than that, as `sbt-dynver` is an AutoPlugin that is all that is required.
 
@@ -190,6 +200,42 @@ Global / onLoad := (Global / onLoad).value.andThen { s =>
 ## Dependencies
 
 * `git`, on the `PATH`
+
+## Library Usage
+
+sbt-dynver also publishes a standalone library, `dynver`.
+
+[![dynver Scala version support](https://index.scala-lang.org/sbt/sbt-dynver/dynver/latest-by-scala-version.svg?platform=jvm)](https://index.scala-lang.org/sbt/sbt-dynver/dynver)
+
+```scala
+"com.github.sbt" % "dynver" % "x.y.z")
+```
+
+The easiest way to use this library is to use the methods that exist on `DynVer`
+to which you can query with questions like:
+
+- The current version
+- The sonatype version
+- If this a snapshot?
+- What the previous version was
+
+```scala
+import java.util.Date
+import sbtdynver.DynVer
+
+DynVer.version(Date())
+// res0: String = 0.2.0+0-3d78911a+20230427-1401
+DynVer.isSnapshot()
+// res1: Boolean = true
+DynVer.isDirty()
+// res2: Boolean = true
+DynVer.previousVersion
+// res3: Option[String] = None
+```
+
+You can get a full idea of what exists on `DynVer` by looking at it
+[here](https://github.com/sbt/sbt-dynver/blob/main/dynver/src/main/scala/sbtdynver/DynVer.scala).
+
 
 ## FAQ
 
