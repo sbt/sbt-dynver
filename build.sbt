@@ -14,14 +14,20 @@ lazy val scalacOptions212 = Seq(
 )
 
 inThisBuild(List(
-  scalaVersion := scala2_12,
-  organization := "com.github.sbt",
-      licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
-   description := "An sbt plugin to dynamically set your version from git",
-    developers := List(Developer("dwijnand", "Dale Wijnand", "dale wijnand gmail com", url("https://dwijnand.com"))),
-     startYear := Some(2016),
-      homepage := scmInfo.value map (_.browseUrl),
-       scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-dynver"), "scm:git:git@github.com:sbt/sbt-dynver.git")),
+             scalaVersion := scala2_12,
+             organization := "com.github.sbt",
+                 licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
+              description := "An sbt plugin to dynamically set your version from git",
+               developers := List(Developer("dwijnand", "Dale Wijnand", "dale wijnand gmail com", url("https://dwijnand.com"))),
+                startYear := Some(2016),
+                 homepage := scmInfo.value map (_.browseUrl),
+                  scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-dynver"), "scm:git:git@github.com:sbt/sbt-dynver.git")),
+  dynverSonatypeSnapshots := true,
+                  version := {
+                    val orig = version.value
+                    if (orig.endsWith("-SNAPSHOT")) "5.0.1-SNAPSHOT"
+                    else orig
+                  },
 
   scalacOptions ++= Seq(
     "-encoding",
