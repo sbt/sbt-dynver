@@ -128,6 +128,17 @@ This character can be overridden by setting:
 ThisBuild / dynverSeparator := "-"
 ```
 
+If you don't want to override `dynverSeparator` for your whole project you can instead do the following
+instead (assuming you have a sbt sub project for your docker build)
+
+```scala
+lazy val dockerBuild = project
+  .in("docker-build")
+  .settings(
+    inConfig(Docker)(DynVerPlugin.buildSettings ++ Seq(dynverSeparator := "-"))
+  )
+```
+
 ## Custom version string
 
 Sometimes you want to customise the version string. It might be for personal preference, or for compatibility with another tool or spec.
