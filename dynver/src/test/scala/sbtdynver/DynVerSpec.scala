@@ -14,6 +14,14 @@ object VersionSpec extends Properties("VersionSpec") {
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTag.commit         .version ?= "1.0.0+1-1234abcd"
   property("on tag v1.0.0 and 1 commit with local changes") = onTag.commit.dirty   .version ?= "1.0.0+1-1234abcd+20160917-0000"
   property("on tag v2")                                     = onTag.commit.tag("2").version ?= "2" // #7, didn't match
+  // for multiple tags, the highest tag is used
+  property("on multiple tags v1.0.0 and v2.0.0, w/o local changes") = onMultipleTags.version ?= "2.0.0"
+  property("on multiple tags v1.0.0 and v2.0.0, with local changes") = onMultipleTags.dirty.version ?= "2.0.0+0-1234abcd+20160917-0000"
+  property("on multiple tags v1.0.0 and v2.0.0, with local changes") = onMultipleTags.dirty.version ?= "2.0.0+0-1234abcd+20160917-0000"
+  property("on multiple tags v1.0.0 and v2.0.0, and 1 commit, w/o local changes") = onMultipleTags.commit.version ?= "2.0.0+1-1234abcd"
+  property("on multiple tags v1.0.0 and v2.0.0, and 1 commit with local changes") = onMultipleTags.commit.dirty.version ?= "2.0.0+1-1234abcd+20160917-0000"
+  property("on multiple tags v1.0.0 and v2.0.0, numerical sort") = onMultipleTags.tag("10.3").tag("10.20").version ?= "10.20" // 1.0.0 < 2.0.0 < 10.1 < 10.20
+  property("on multiple tags v1.0.0 and v2.0.0, then tag v2") = onMultipleTags.commit.tag("2").version ?= "2" // #previous tags didn't match
 }
 
 object PreviousVersionSpec extends Properties("PreviousVersionSpec") {
@@ -26,6 +34,12 @@ object PreviousVersionSpec extends Properties("PreviousVersionSpec") {
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTag.commit             .previousVersion ?= Some("1.0.0")
   property("on tag v1.0.0 and 1 commit with local changes") = onTag.commit.dirty       .previousVersion ?= Some("1.0.0")
   property("on tag v2.0.0, w/o local changes")              = onTag.commit.tag("2.0.0").previousVersion ?= Some("1.0.0")
+
+  property("on multiple tags v1.0.0 and v2.0.0, w/o local changes") = onMultipleTags.previousVersion ?= None
+  property("on multiple tags v1.0.0 and v2.0.0, with local changes") = onMultipleTags.dirty.previousVersion ?= None
+  property("on multiple tags v1.0.0 and v2.0.0, and 1 commit, w/o local changes") = onMultipleTags.commit.previousVersion ?= Some("2.0.0")
+  property("on multiple tags v1.0.0 and v2.0.0, and 1 commit with local changes") = onMultipleTags.commit.dirty.previousVersion ?= Some("2.0.0")
+  property("on multiple tags v1.0.0 and v2.0.0, w/o local changes") = onMultipleTags.commit.tag("3.0.0").previousVersion ?= Some("3.0.0")
 
   property("w/ merge commits")            = onBranch2x.checkout("master").merge("2.x") .previousVersion ?= Some("1.0.0")
   property("w/ merge commits + tag")      = onBranch2Tag                               .previousVersion ?= Some("1.0.0")

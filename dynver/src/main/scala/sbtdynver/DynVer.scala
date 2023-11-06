@@ -1,14 +1,14 @@
 package sbtdynver
 
 import java.io.File
-import java.util._, regex.Pattern
-
-import scala.PartialFunction
+import java.util._
+import regex.Pattern
 import scala.util._
-
 import scala.sys.process.Process
+import dynver._
+import impl.NoProcessLogger
 
-import dynver._, impl.NoProcessLogger
+import scala.annotation.tailrec
 
 sealed case class GitRef(value: String)
 final  case class GitCommitSuffix(distance: Int, sha: String)
@@ -172,6 +172,43 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
           }
         else Some(out)
       }
+      .flatMap(selectFromMultipleTags)
+
+  }
+
+  private def selectFromMultipleTags(out: GitDescribeOutput): Option[GitDescribeOutput] = {
+    def exec(cmd: String) = Try(Process(cmd, wd) !! NoProcessLogger).toOption
+
+    // if out.ref is an annotated tag `git tag --list --points-at ${out.ref.value}` returns tags on that tag object
+    // and not tags on the commit object. So we need to find the commit object SHA the ref points to.
+    (for {
+      // find the commit object SHA of the current commit
+      commitHash <- exec(s"git rev-parse ${out.ref.value}^{commit}")
+      // find all the tags that points at the commit object
+      allTags <- exec(s"git tag --list --points-at $commitHash")
+      highestTag <- allTags.split("\n").toList.map(GitRef(_)).filter(_.isTag).sortWith(hybridAlphaNumericSort).lastOption
+    } yield {
+      out.copy(ref = highestTag)
+    }).orElse(Some(out))
+  }
+
+  private def hybridAlphaNumericSort(a: GitRef, b: GitRef): Boolean = {
+    val a1 = a.dropPrefix
+    val b1 = b.dropPrefix
+    @tailrec
+    def loop(a: String, b: String) : Boolean =
+      if(a.isEmpty) true
+      else if (b.isEmpty) false
+      else if (a.head.isDigit && b.head.isDigit) {
+        val (aNum, aRest) = a.span(_.isDigit)
+        val (bNum, bRest) = b.span(_.isDigit)
+        if (aNum.toInt == bNum.toInt) loop(aRest, bRest)
+        else aNum.toInt < bNum.toInt
+      } else if (a.head.isDigit) true
+      else if (b.head.isDigit) false
+      else if (a.head == b.head) loop(a.tail, b.tail)
+      else a.head < b.head
+    loop(a1, b1)
   }
 
   def getGitPreviousStableTag: Option[GitDescribeOutput] = {

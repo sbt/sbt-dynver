@@ -88,6 +88,17 @@ To use this feature with the Migration Manager [MiMa](https://github.com/lightbe
 mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% moduleName.value % _).toSet
 ```
 
+#### Multiple tags on the same commit
+
+In case the last know tag has sibling tags that points at the same commit, the highest tag is used.
+For example, for the following tags:
+```
+v1.0.0
+v10.1  // this tag is the highest selected tag
+v2.0.0
+```
+
+
 ## Tag Requirements
 
 In order to be recognized by sbt-dynver, by default tags must begin with the lowercase letter 'v' followed by a digit.
