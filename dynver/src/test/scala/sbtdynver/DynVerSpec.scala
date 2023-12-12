@@ -39,7 +39,7 @@ object PreviousVersionSpec extends Properties("PreviousVersionSpec") {
   property("on multiple tags v1.0.0 and v2.0.0, with local changes") = onMultipleTags.dirty.previousVersion ?= None
   property("on multiple tags v1.0.0 and v2.0.0, and 1 commit, w/o local changes") = onMultipleTags.commit.previousVersion ?= Some("2.0.0")
   property("on multiple tags v1.0.0 and v2.0.0, and 1 commit with local changes") = onMultipleTags.commit.dirty.previousVersion ?= Some("2.0.0")
-  property("on multiple tags v1.0.0 and v2.0.0, w/o local changes") = onMultipleTags.commit.tag("3.0.0").previousVersion ?= Some("3.0.0")
+  property("on tag v3.0.0 with previous multiple tags v1.0.0 and v2.0.0") = onMultipleTags.commit.tag("3.0.0").previousVersion ?= Some("2.0.0")
 
   property("w/ merge commits")            = onBranch2x.checkout("master").merge("2.x") .previousVersion ?= Some("1.0.0")
   property("w/ merge commits + tag")      = onBranch2Tag                               .previousVersion ?= Some("1.0.0")
@@ -58,12 +58,16 @@ object IsSnapshotSpec extends Properties("IsSnapshotSpec") {
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTag.commit         .isSnapshot ?= true
   property("on tag v1.0.0 and 1 commit with local changes") = onTag.commit.dirty   .isSnapshot ?= true
   property("on tag v2")                                     = onTag.commit.tag("2").isSnapshot ?= false
+  property("on multiple tags, w/o local changes")           = onMultipleTags.isSnapshot        ?= false
+  property("on multiple tags and 1 commit, w/o local changes") = onMultipleTags.commit.isSnapshot ?= true
+  property("on multiple tags v1.0.0 and 1 commit with local changes") = onMultipleTags.commit.dirty.isSnapshot ?= true
 }
 
 object SonatypeSnapshotSpec extends Properties("SonatypeSnapshotSpec") {
   property("on tag v1.0.0 with local changes")                = onTag.dirty          .sonatypeVersion ?= "1.0.0+0-1234abcd+20160917-0000-SNAPSHOT"
   property("on tag v1.0.0 and 1 commit, w/o local changes S") = onTag.commit         .sonatypeVersion ?= "1.0.0+1-1234abcd-SNAPSHOT"
   property("on tag v1.0.0, w/o local changes")                = onTag                .sonatypeVersion ?= "1.0.0"
+  property("on multiple tags, w/o local changes")             = onMultipleTags       .sonatypeVersion ?= "2.0.0"
   property("on tag v2")                                       = onTag.commit.tag("2").sonatypeVersion ?= "2"
 }
 
@@ -77,4 +81,7 @@ object isVersionStableSpec extends Properties("IsVersionStableSpec") {
   property("on tag v1.0.0 and 1 commit, w/o local changes") = onTag.commit         .isVersionStable ?= true
   property("on tag v1.0.0 and 1 commit with local changes") = onTag.commit.dirty   .isVersionStable ?= false
   property("on tag v2")                                     = onTag.commit.tag("2").isVersionStable ?= true
+  property("on multiple tags, w/o local changes")           = onMultipleTags.isVersionStable        ?= true
+  property("on multiple tags and 1 commit w/o local changes") = onMultipleTags.commit.isVersionStable ?= true
+  property("on multiple tags with local changes")           = onMultipleTags.dirty.isVersionStable  ?= false
 }

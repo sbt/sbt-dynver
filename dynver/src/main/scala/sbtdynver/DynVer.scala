@@ -217,9 +217,10 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
       // as merge commits can have multiple parents
       parentHash <- execAndHandleEmptyOutput("git --no-pager log --pretty=%H -n 1 HEAD^1")
       // Find the closest tag of the parent commit
-      tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --match $TagPattern --always $parentHash")
-      out <- PartialFunction.condOpt(tag)(parser.parse)
-    } yield out
+      closestTag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --match $TagPattern --always $parentHash")
+      outOfClosestTag <- PartialFunction.condOpt(closestTag)(parser.parse)
+      highestTag <- selectFromMultipleTags(outOfClosestTag)
+    } yield highestTag
   }
 
   def timestamp(d: Date): String = GitDescribeOutput.timestamp(d)
