@@ -7,6 +7,8 @@ import scala.util._
 import scala.sys.process.Process
 import dynver._
 import impl.NoProcessLogger
+import sbt.librarymanagement.SemanticSelector
+import sbt.librarymanagement.VersionNumber
 
 import scala.annotation.tailrec
 
@@ -186,30 +188,12 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
       commitHash <- exec(s"git rev-parse ${out.ref.value}^{commit}")
       // find all the tags that points at the commit object
       allTags <- exec(s"git tag --list --points-at $commitHash")
-      highestTag <- allTags.split("\n").toList.map(GitRef(_)).filter(_.isTag).sortWith(hybridAlphaNumericSort).lastOption
+      highestTag <- allTags.split("\n").toList.map(GitRef(_)).filter(_.isTag).sortWith(DynVer.versionCompare).lastOption
     } yield {
       out.copy(ref = highestTag)
     }).orElse(Some(out))
   }
 
-  private def hybridAlphaNumericSort(a: GitRef, b: GitRef): Boolean = {
-    val a1 = a.dropPrefix
-    val b1 = b.dropPrefix
-    @tailrec
-    def loop(a: String, b: String) : Boolean =
-      if(a.isEmpty) true
-      else if (b.isEmpty) false
-      else if (a.head.isDigit && b.head.isDigit) {
-        val (aNum, aRest) = a.span(_.isDigit)
-        val (bNum, bRest) = b.span(_.isDigit)
-        if (aNum.toInt == bNum.toInt) loop(aRest, bRest)
-        else aNum.toInt < bNum.toInt
-      } else if (a.head.isDigit) true
-      else if (b.head.isDigit) false
-      else if (a.head == b.head) loop(a.tail, b.tail)
-      else a.head < b.head
-    loop(a1, b1)
-  }
 
   def getGitPreviousStableTag: Option[GitDescribeOutput] = {
     for {
@@ -235,6 +219,21 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
   override def apply(wd: Option[File]) = new DynVer(wd)
   def apply(wd: Option[File], separator: String, vTagPrefix: Boolean) = new DynVer(wd, separator, vTagPrefix)
+
+  /**
+   * Compare 2 versions based on semantic versioning (or approaching semver)
+   * @param a
+   * @param b
+   * @return true if a is semantically before b
+   */
+  private[sbtdynver] def versionCompare(a: GitRef, b: GitRef): Boolean = {
+    val v1 = VersionNumber(a.dropPrefix)
+    // in case there are missing version numbers, fill the blank with 0
+    // this is to support version numbering not exactly semver, like 1.2-alpha
+    val v1fixed = VersionNumber(v1.numbers.padTo(3, 0L), v1.tags, v1.extras)
+    val v2 = VersionNumber(b.dropPrefix)
+    SemanticSelector(s">${v1fixed.toString}").matches(v2)
+  }
 }
 
 object `package`
