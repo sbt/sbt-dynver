@@ -4,8 +4,6 @@ import org.scalacheck.Gen
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Prop.propBoolean
 import org.scalacheck.Properties
-import org.scalacheck.Test
-import sbt.librarymanagement.VersionNumber
 
 object VersionCompareSpec extends Properties("VersionCompareSpec") {
   property("major version is higher than minors") = forAll(Gen.posNum[Int]){ (i:Int) =>
