@@ -90,7 +90,7 @@ mimaPreviousArtifacts := previousStableVersion.value.map(organization.value %% m
 
 #### Multiple tags on the same commit
 
-In case the last know tag has sibling tags that points at the same commit, the highest tag is used.
+In case the last known tag has sibling tags that point at the same commit, the highest tag is used.
 For example, for the following tags:
 ```
 v1.0.0
