@@ -17,6 +17,7 @@ sealed class RepoStates(tagPrefix: String) {
   def noCommits     = notAGitRepo.init
   def onCommit      = noCommits.commit.commit.commit
   def onTag         = onCommit.tag("1.0.0")
+  def onMultipleTags = onTag.tag("2.0.0")
   def onBranch2x    = onTag.branch("2.x").commit
   def onBranch2Tag  = onBranch2x.tag("2.0.0")
   def onMultiBranch = onBranch2Tag.commit.tag("2.1.0").checkout("master").commit.tag("1.1.0")

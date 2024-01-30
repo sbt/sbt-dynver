@@ -1,14 +1,16 @@
 package sbtdynver
 
 import java.io.File
-import java.util._, regex.Pattern
-
-import scala.PartialFunction
+import java.util._
+import regex.Pattern
 import scala.util._
-
 import scala.sys.process.Process
+import dynver._
+import impl.NoProcessLogger
+import sbt.librarymanagement.SemanticSelector
+import sbt.librarymanagement.VersionNumber
 
-import dynver._, impl.NoProcessLogger
+import scala.annotation.tailrec
 
 sealed case class GitRef(value: String)
 final  case class GitCommitSuffix(distance: Int, sha: String)
@@ -172,7 +174,26 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
           }
         else Some(out)
       }
+      .flatMap(selectFromMultipleTags)
+
   }
+
+  private def selectFromMultipleTags(out: GitDescribeOutput): Option[GitDescribeOutput] = {
+    def exec(cmd: String) = Try(Process(cmd, wd) !! NoProcessLogger).toOption
+
+    // if out.ref is an annotated tag `git tag --list --points-at ${out.ref.value}` returns tags on that tag object
+    // and not tags on the commit object. So we need to find the commit object SHA the ref points to.
+    (for {
+      // find the commit object SHA of the current commit
+      commitHash <- exec(s"git rev-parse ${out.ref.value}^{commit}")
+      // find all the tags that points at the commit object
+      allTags <- exec(s"git tag --list --points-at $commitHash")
+      highestTag <- allTags.split("\n").toList.map(GitRef(_)).filter(_.isTag).sortWith(DynVer.versionCompare).lastOption
+    } yield {
+      out.copy(ref = highestTag)
+    }).orElse(Some(out))
+  }
+
 
   def getGitPreviousStableTag: Option[GitDescribeOutput] = {
     for {
@@ -180,9 +201,10 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
       // as merge commits can have multiple parents
       parentHash <- execAndHandleEmptyOutput("git --no-pager log --pretty=%H -n 1 HEAD^1")
       // Find the closest tag of the parent commit
-      tag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --match $TagPattern --always $parentHash")
-      out <- PartialFunction.condOpt(tag)(parser.parse)
-    } yield out
+      closestTag <- execAndHandleEmptyOutput(s"git describe --tags --abbrev=0 --match $TagPattern --always $parentHash")
+      outOfClosestTag <- PartialFunction.condOpt(closestTag)(parser.parse)
+      highestTag <- selectFromMultipleTags(outOfClosestTag)
+    } yield highestTag
   }
 
   def timestamp(d: Date): String = GitDescribeOutput.timestamp(d)
@@ -197,6 +219,21 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
 object DynVer extends DynVer(None) with (Option[File] => DynVer) {
   override def apply(wd: Option[File]) = new DynVer(wd)
   def apply(wd: Option[File], separator: String, vTagPrefix: Boolean) = new DynVer(wd, separator, vTagPrefix)
+
+  /**
+   * Compare 2 versions based on semantic versioning (or approaching semver)
+   * @param a
+   * @param b
+   * @return true if a is semantically before b
+   */
+  private[sbtdynver] def versionCompare(a: GitRef, b: GitRef): Boolean = {
+    val v1 = VersionNumber(a.dropPrefix)
+    // in case there are missing version numbers, fill the blank with 0
+    // this is to support version numbering not exactly semver, like 1.2-alpha
+    val v1fixed = VersionNumber(v1.numbers.padTo(3, 0L), v1.tags, v1.extras)
+    val v2 = VersionNumber(b.dropPrefix)
+    SemanticSelector(s">${v1fixed.toString}").matches(v2)
+  }
 }
 
 object `package`
