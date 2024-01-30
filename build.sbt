@@ -45,7 +45,11 @@ val dynverLib = LocalProject("dynver")
 val dynver    = project.settings(
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.13.2.202306221912-r" % Test,
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.17.0"                % Test,
-  libraryDependencies += "org.scala-sbt" % "sbt" % sbtVersion.value % "provided",
+  libraryDependencies += "org.scala-sbt" %% "librarymanagement-core" % (scalaBinaryVersion.value match {
+    case "2.12" | "2.13" => "1.9.3"
+    case "3" => "2.0.0-alpha13"
+    case _ => throw new IllegalArgumentException("unsupported version")
+  }),
   resolvers           += Resolver.sbtPluginRepo("releases"), // for prev artifacts, not repo1 b/c of mergly publishing
   publishSettings,
   crossScalaVersions ++= Seq(scala2_13, scala3),
