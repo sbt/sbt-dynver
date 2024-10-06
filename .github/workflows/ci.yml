@@ -8,6 +8,17 @@ jobs:
   test:
     strategy:
       fail-fast: false
+      matrix:
+        include:
+          - java: 8
+            distribution: zulu
+            jobtype: 1
+          - java: 8
+            distribution: zulu
+            jobtype: 2
+          - java: 8
+            distribution: zulu
+            jobtype: 3
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -15,9 +26,23 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-java@v4
       with:
-        distribution: temurin
-        java-version: 8
+        distribution: "${{ matrix.distribution }}"
+        java-version: "${{ matrix.java }}"
         cache: sbt
     - uses: sbt/setup-sbt@v1
-    - name: test
-      run: sbt +test scripted mimaReportBinaryIssues
+    - name: Build and test (sbt 1.x)
+      if: ${{ matrix.jobtype == 1 }}
+      shell: bash
+      run: |
+        sbt --client +test
+        sbt --client "++2.12.x; scripted"
+    - name: Build and test (sbt 2.x)
+      if: ${{ matrix.jobtype == 2 }}
+      shell: bash
+      run: |
+        sbt --client "++3.x; scripted"
+    - name: Mima
+      if: ${{ matrix.jobtype == 3 }}
+      shell: bash
+      run: |
+        sbt --client mimaReportBinaryIssues
