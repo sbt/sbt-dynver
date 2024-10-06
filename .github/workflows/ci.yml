@@ -20,4 +20,4 @@ jobs:
         cache: sbt
     - uses: sbt/setup-sbt@v1
     - name: test
-      run: sbt +test scripted mimaReportBinaryIssues
+      run: sbt -v +test +scripted mimaReportBinaryIssues
