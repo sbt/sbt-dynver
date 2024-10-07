@@ -1,4 +1,3 @@
-Global / onLoad := (Global / onLoad).value.andThen { s =>
+TaskKey[Unit]("check") := {
   dynverAssertTagVersion.value
-  s
 }
