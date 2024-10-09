@@ -16,11 +16,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: coursier/cache-action@v6
+      - uses: coursier/setup-action@v1
+        with:
+          apps: sbt
       - uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '8'
-          cache: 'sbt'
+          distribution: temurin
+          java-version: 8
 
       - name: Publish artifacts
         run: sbt ci-release
