@@ -17,9 +17,7 @@ jobs:
       with:
         distribution: temurin
         java-version: 8
-    - uses: coursier/setup-action@v1
-      with:
-        apps: sbt
-    - uses: coursier/cache-action@v6
+        cache: sbt
+    - uses: sbt/setup-sbt@v1
     - name: test
       run: sbt +test scripted mimaReportBinaryIssues
