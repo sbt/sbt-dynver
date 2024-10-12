@@ -76,7 +76,7 @@ lazy val publishSettings = Def.settings(
   MimaSettings.mimaSettings,
 )
 
-crossScalaVersions    := Seq(scala2_12, scala3)
+crossScalaVersions    := Nil
 mimaPreviousArtifacts := Set.empty
 publish / skip        := true
 Global / cancelable      := true
