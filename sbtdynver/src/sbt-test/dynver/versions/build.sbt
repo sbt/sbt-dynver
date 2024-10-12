@@ -19,6 +19,8 @@ TaskKey[Unit]("checkOnTagAndCommitDirty") := check(version.value, s"1.0.0+1-${he
 
 TaskKey[Unit]("gitInitSetup") := {
   implicit def log2log(log: Logger): scala.sys.process.ProcessLogger = sbtLoggerToScalaSysProcessLogger(log)
+  IO.writeLines(baseDirectory.value / ".gitignore", List("target", ".bsp"))
+  "git config --global init.defaultBranch main".!!(streams.value.log)
   "git init".!!(streams.value.log)
   "git config user.email dynver@mailinator.com".!!(streams.value.log)
   "git config user.name dynver".!!(streams.value.log)

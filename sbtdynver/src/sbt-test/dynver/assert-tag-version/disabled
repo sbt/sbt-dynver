@@ -1,0 +1,6 @@
+# In sbt 2.x, this fails to load
+# [error] java.lang.RuntimeException: Failed to derive version from git tags. Maybe run `git fetch --unshallow`? Version: HEAD+20241012-0028
+# [error]   at sbtdynver.GitDescribeOutput$OptGitDescribeOutputOps$.assertTagVersion$extension(DynVer.scala:130)
+# [error]   at sbtdynver.DynVerPlugin$.assertTagVersion$lzyINIT1$$anonfun$1(DynVerPlugin.scala:65)
+
+-> check

@@ -46,7 +46,8 @@ val dynver    = project.settings(
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.13.3.202401111512-r" % Test,
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.18.1"                % Test,
   publishSettings,
-  crossScalaVersions ++= Seq(scala2_13, scala3),
+  crossScalaVersions := Seq(scala2_12, scala2_13, scala3),
+  scripted := (()),
   scalacOptions := {
     scalaBinaryVersion.value match {
       case "3" | "2.13" => scalacOptions.value.filterNot(scalacOptions212.contains(_))
@@ -61,9 +62,11 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   scriptedDependencies := Seq(dynver / publishLocal, publishLocal).dependOn.value,
   scriptedLaunchOpts   += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts   += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
+  crossScalaVersions   := Seq(scala2_12, scala3),
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.3.0"
+      case _ => "2.0.0-M2"
     }
   },
   publishSettings,
@@ -73,6 +76,7 @@ lazy val publishSettings = Def.settings(
   MimaSettings.mimaSettings,
 )
 
+crossScalaVersions    := Nil
 mimaPreviousArtifacts := Set.empty
 publish / skip        := true
 Global / cancelable      := true
