@@ -4,6 +4,7 @@ aggregateProjects(dynverLib, sbtdynver)
 lazy val scala2_12 = "2.12.20"
 lazy val scala2_13 = "2.13.16"
 lazy val scala3    = "3.3.5"
+lazy val scala3sbt = "3.6.4"
 lazy val scalacOptions212 = Seq(
   "-Xlint",
   "-Xfuture",
@@ -62,11 +63,11 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   scriptedDependencies := Seq(dynver / publishLocal, publishLocal).dependOn.value,
   scriptedLaunchOpts   += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts   += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
-  crossScalaVersions   := Seq(scala2_12, scala3),
+  crossScalaVersions   := Seq(scala2_12, scala3sbt),
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.3.0"
-      case _ => "2.0.0-M2"
+      case _ => "2.0.0-M4"
     }
   },
   publishSettings,
