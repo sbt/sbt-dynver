@@ -75,7 +75,7 @@ final case class GitDescribeOutput(ref: GitRef, commitSuffix: GitCommitSuffix, d
 object GitDescribeOutput extends ((GitRef, GitCommitSuffix, GitDirtySuffix) => GitDescribeOutput) {
   private val OptWs        =  """[\s\n]*""" // doesn't \s include \n? why can't this call .r?
   private val Distance     =  """\+([0-9]+)""".r
-  private val Sha          =  """([0-9a-f]{8})""".r
+  private val Sha          =  """([0-9a-f]{8,39})""".r
   private val HEAD         =  """HEAD""".r
   private val CommitSuffix = s"""(?:$Distance-$Sha)""".r
   private val TstampSuffix =  """(\+[0-9]{8}-[0-9]{4})""".r
@@ -163,7 +163,7 @@ sealed case class DynVer(wd: Option[File], separator: String, tagPrefix: String)
   def getGitDescribeOutput(d: Date): Option[GitDescribeOutput] = {
     val process = Process(s"git describe --long --tags --abbrev=8 --match $TagPattern --always --dirty=+${timestamp(d)}", wd)
     Try(process !! NoProcessLogger).toOption
-      .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8})", "+$1-$2"))
+      .map(_.replaceAll("-([0-9]+)-g([0-9a-f]{8,})", "+$1-$2"))
       .map(parser.parse)
       .flatMap { out =>
         if (out.hasNoTags())
