@@ -22,7 +22,7 @@ object GitRef extends (String => GitRef) {
   final implicit class GitRefOps(val x: GitRef) extends AnyVal { import x._
     private def prefix = x match { case x: GitTag => x.prefix case _ => DynVer.tagPrefix }
 
-    def isTag: Boolean     = value.startsWith(prefix)
+    def isTag: Boolean     = x.isInstanceOf[GitTag]
     def dropPrefix: String = value.stripPrefix(prefix)
 
     def mkString(prefix: String, suffix: String): String =
