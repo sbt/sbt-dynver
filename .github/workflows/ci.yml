@@ -46,3 +46,7 @@ jobs:
       shell: bash
       run: |
         sbt --client mimaReportBinaryIssues
+    - name: Cleanup
+      shell: bash
+      run: |
+        rm -rf "$HOME/.ivy2/local" || true
