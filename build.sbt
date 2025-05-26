@@ -24,11 +24,6 @@ inThisBuild(List(
                  homepage := scmInfo.value map (_.browseUrl),
                   scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt-dynver"), "scm:git:git@github.com:sbt/sbt-dynver.git")),
   dynverSonatypeSnapshots := true,
-                  version := {
-                    val orig = version.value
-                    if (orig.endsWith("-SNAPSHOT")) "5.0.1-SNAPSHOT"
-                    else orig
-                  },
 
   scalacOptions ++= Seq(
     "-encoding",
