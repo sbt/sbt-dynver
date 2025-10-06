@@ -9,6 +9,7 @@ object DynVerPlugin extends AutoPlugin {
   override def trigger  = allRequirements
 
   object autoImport {
+    @transient
     val dynver = taskKey[String]("The version of your project, from git")
 
     val dynverVTagPrefix        = settingKey[Boolean]("Whether or not tags have a 'v' prefix")
