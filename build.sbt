@@ -62,7 +62,7 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.3.0"
-      case _ => "2.0.0-M4"
+      case _ => "2.0.0-RC6"
     }
   },
   publishSettings,
