@@ -4,7 +4,7 @@ aggregateProjects(dynverLib, sbtdynver)
 lazy val scala2_12 = "2.12.20"
 lazy val scala2_13 = "2.13.17"
 lazy val scala3    = "3.3.7"
-lazy val scala3sbt = "3.7.3"
+lazy val scala3sbt = "3.7.4"
 lazy val scalacOptions212 = Seq(
   "-Xlint",
   "-Xfuture",
