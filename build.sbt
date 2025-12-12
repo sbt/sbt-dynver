@@ -1,7 +1,7 @@
 val dynverRoot = project.in(file("."))
 aggregateProjects(dynverLib, sbtdynver)
 
-lazy val scala2_12 = "2.12.20"
+lazy val scala2_12 = "2.12.21"
 lazy val scala2_13 = "2.13.18"
 lazy val scala3    = "3.3.7"
 lazy val scala3sbt = "3.7.4"
