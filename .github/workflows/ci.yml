@@ -13,7 +13,7 @@ jobs:
           - java: 8
             distribution: zulu
             jobtype: 1
-          - java: 8
+          - java: 17
             distribution: zulu
             jobtype: 2
           - java: 8
@@ -34,13 +34,12 @@ jobs:
       if: ${{ matrix.jobtype == 1 }}
       shell: bash
       run: |
-        sbt --client +test
-        sbt --client "++2.12.x; scripted"
+        sbt --client "++2.12.x; test ; scripted"
     - name: Build and test (sbt 2.x)
       if: ${{ matrix.jobtype == 2 }}
       shell: bash
       run: |
-        sbt --client "++3.x; scripted"
+        sbt --client "++3.x; test ; scripted"
     - name: Mima
       if: ${{ matrix.jobtype == 3 }}
       shell: bash
