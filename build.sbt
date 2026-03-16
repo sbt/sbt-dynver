@@ -6,6 +6,7 @@ lazy val scala2_13 = "2.13.18"
 lazy val scala3    = "3.3.7"
 lazy val scala3sbt = "3.8.2"
 lazy val scalacOptions212 = Seq(
+  "-release:8",
   "-Xlint",
   "-Xfuture",
   "-Ywarn-dead-code",
@@ -31,7 +32,7 @@ inThisBuild(List(
     "-deprecation",
     "-feature",
     "-unchecked",
-  ) ++ scalacOptions212,
+  ),
   Test /              fork := false,
   Test /       logBuffered := false,
   Test / parallelExecution := true,
@@ -44,10 +45,12 @@ val dynver    = project.settings(
   publishSettings,
   crossScalaVersions := Seq(scala2_12, scala2_13, scala3),
   scripted := (()),
-  scalacOptions := {
+  scalacOptions ++= {
     scalaBinaryVersion.value match {
-      case "3" | "2.13" => scalacOptions.value.filterNot(scalacOptions212.contains(_))
-      case _            => scalacOptions.value
+      case "3" | "2.13" =>
+        Nil
+      case _ =>
+        scalacOptions212
     }
   }
 )
@@ -62,7 +65,7 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.3.0"
-      case _ => "2.0.0-RC6"
+      case _ => "2.0.0-RC9"
     }
   },
   publishSettings,
