@@ -4,7 +4,7 @@ aggregateProjects(dynverLib, sbtdynver)
 lazy val scala2_12 = "2.12.21"
 lazy val scala2_13 = "2.13.18"
 lazy val scala3    = "3.3.7"
-lazy val scala3sbt = "3.8.1"
+lazy val scala3sbt = "3.8.2"
 lazy val scalacOptions212 = Seq(
   "-release:8",
   "-Xlint",
@@ -65,7 +65,7 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.3.0"
-      case _ => "2.0.0-RC9"
+      case _ => "2.0.0-RC10"
     }
   },
   publishSettings,
