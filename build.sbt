@@ -40,8 +40,8 @@ inThisBuild(List(
 
 val dynverLib = LocalProject("dynver")
 val dynver    = project.settings(
-  libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.13.3.202401111512-r" % Test,
-  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.19.0"                % Test,
+  libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "7.6.0.202603022253-r" % Test,
+  libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.19.0"               % Test,
   publishSettings,
   crossScalaVersions := Seq(scala2_12, scala2_13, scala3),
   scripted := (()),
