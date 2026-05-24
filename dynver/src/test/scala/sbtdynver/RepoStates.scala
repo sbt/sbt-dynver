@@ -70,8 +70,8 @@ sealed class RepoStates(tagPrefix: String) {
       sha = getHeadSHA
     }
 
-    def version         = dynver.        version(date).replaceAllLiterally(sha, "1234abcd")
-    def sonatypeVersion = dynver.sonatypeVersion(date).replaceAllLiterally(sha, "1234abcd")
+    def version         = dynver.        version(date).replace(sha, "1234abcd")
+    def sonatypeVersion = dynver.sonatypeVersion(date).replace(sha, "1234abcd")
     def previousVersion = dynver.previousVersion
     def isSnapshot      = dynver.isSnapshot()
     def isVersionStable = dynver.isVersionStable()
