@@ -9,16 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - java: 8
-            distribution: zulu
-            jobtype: 1
-          - java: 17
-            distribution: zulu
-            jobtype: 2
-          - java: 8
-            distribution: zulu
-            jobtype: 3
+        jobtype: [1, 2, 3]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
@@ -26,8 +17,8 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-java@v5
       with:
-        distribution: "${{ matrix.distribution }}"
-        java-version: "${{ matrix.java }}"
+        distribution: zulu
+        java-version: 17
         cache: sbt
     - uses: sbt/setup-sbt@v1
     - name: Build and test (sbt 1.x)
