@@ -10,15 +10,26 @@ lazy val scala2_12 = "2.12.21"
 lazy val scala2_13 = "2.13.18"
 lazy val scala3    = "3.3.7"
 lazy val scala3sbt = "3.8.4"
-lazy val scalacOptions212 = Seq(
-  "-release:8",
-  "-Xlint",
-  "-Xfuture",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-value-discard",
-  "-Yno-adapted-args",
-)
+
+def compilerOptions(scalaBinaryVersion: String): Seq[String] =
+  val shared = Seq(
+    "-encoding", "utf8",
+    "-deprecation",
+    "-feature",
+    "-unchecked",
+  )
+  scalaBinaryVersion match {
+    case "2.12" => shared ++ Seq(
+        "-release:8",
+        "-Xlint",
+        "-Xfuture",
+        "-Ywarn-dead-code",
+        "-Ywarn-numeric-widen",
+        "-Ywarn-value-discard",
+        "-Yno-adapted-args",
+      )
+    case _ => shared
+  }
 
 inThisBuild(List(
              scalaVersion := scala2_12,
@@ -30,14 +41,6 @@ inThisBuild(List(
                  homepage := scmInfo.value.map(_.browseUrl),
                   scmInfo := Some(ScmInfo(uri("https://github.com/sbt/sbt-dynver"), "scm:git:git@github.com:sbt/sbt-dynver.git")),
   dynverSonatypeSnapshots := true,
-
-  scalacOptions ++= Seq(
-    "-encoding",
-    "utf8",
-    "-deprecation",
-    "-feature",
-    "-unchecked",
-  ),
   Test /              fork := false,
   Test /       logBuffered := false,
   Test / parallelExecution := true,
@@ -49,19 +52,12 @@ lazy val dynver    = project.settings(
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.19.0"                % Test,
   publishSettings,
   crossScalaVersions := Seq(scala2_12, scala2_13, scala3),
+  scalacOptions ++= compilerOptions(scalaBinaryVersion.value),
   scripted := (()),
-  scalacOptions ++= {
-    scalaBinaryVersion.value match {
-      case "3" | "2.13" =>
-        Nil
-      case _ =>
-        scalacOptions212
-    }
-  }
 )
 
 val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
-                  name := "sbt-dynver",
+  name                 := "sbt-dynver",
   scriptedBufferLog    := true,
   scriptedDependencies := Def.task(()).dependsOn(dynver / publishLocal, publishLocal).value,
   scriptedLaunchOpts   += s"-Dplugin.version=${version.value}",
@@ -73,6 +69,7 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
       case _ => "2.0.2"
     }
   },
+  scalacOptions ++= compilerOptions(scalaBinaryVersion.value),
   publishSettings,
 )
 
