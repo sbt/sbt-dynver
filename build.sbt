@@ -8,8 +8,8 @@ lazy val dynverRoot = project.in(file("."))
 
 lazy val scala2_12 = "2.12.21"
 lazy val scala2_13 = "2.13.18"
-lazy val scala3    = "3.3.8"
-lazy val scala3sbt = "3.8.4"
+lazy val scala3    = "3.9.0"
+lazy val scala3sbt = "3.9.0"
 
 def compilerOptions(scalaBinaryVersion: String): Seq[String] =
   val shared = Seq(
@@ -66,7 +66,7 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.12.3"
-      case _ => "2.0.2"
+      case _ => "2.0.9"
     }
   },
   scalacOptions ++= compilerOptions(scalaBinaryVersion.value),
