@@ -9,7 +9,7 @@ lazy val dynverRoot = project.in(file("."))
 lazy val scala2_12 = "2.12.21"
 lazy val scala2_13 = "2.13.18"
 lazy val scala3    = "3.3.8"
-lazy val scala3sbt = "3.8.4"
+lazy val scala3sbt = "3.9.0"
 
 def compilerOptions(scalaBinaryVersion: String): Seq[String] =
   val shared = Seq(
@@ -20,6 +20,7 @@ def compilerOptions(scalaBinaryVersion: String): Seq[String] =
   )
   scalaBinaryVersion match {
     case "2.12" => shared ++ Seq(
+        "-Xsource:3",
         "-release:8",
         "-Xlint",
         "-Xfuture",
@@ -28,6 +29,7 @@ def compilerOptions(scalaBinaryVersion: String): Seq[String] =
         "-Ywarn-value-discard",
         "-Yno-adapted-args",
       )
+    case "2.13" => shared ++ Seq("-Xsource:3", "-release:8")
     case _ => shared
   }
 
@@ -48,6 +50,11 @@ inThisBuild(List(
 
 lazy val dynverLib = LocalProject("dynver")
 lazy val dynver    = project.settings(
+  // The plugin's Scala 3 compiler can consume the library's older LTS TASTy.
+  scalaVersion := {
+    if ((LocalProject("sbtdynver") / scalaBinaryVersion).value == "3") scala3
+    else scala2_12
+  },
   libraryDependencies += "org.eclipse.jgit"  % "org.eclipse.jgit" % "5.13.3.202401111512-r" % Test,
   libraryDependencies += "org.scalacheck"   %% "scalacheck"       % "1.20.0"                % Test,
   publishSettings,
@@ -66,7 +73,7 @@ val sbtdynver = project.dependsOn(dynverLib).enablePlugins(SbtPlugin).settings(
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.12.3"
-      case _ => "2.0.2"
+      case _ => "2.1.0"
     }
   },
   scalacOptions ++= compilerOptions(scalaBinaryVersion.value),
