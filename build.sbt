@@ -11,6 +11,13 @@ lazy val scala2_13 = "2.13.18"
 lazy val scala3    = "3.3.8"
 lazy val scala3sbt = "3.9.0"
 
+def crossPublishCommand(command: String): String =
+  s"; project dynverRoot; ++2.12.x; $command; ++2.13.x; dynver/$command; ++3.x; $command"
+
+addCommandAlias("publishCross", crossPublishCommand("publish"))
+addCommandAlias("publishCrossSigned", crossPublishCommand("publishSigned"))
+addCommandAlias("publishCrossLocal", crossPublishCommand("publishLocal"))
+
 def compilerOptions(scalaBinaryVersion: String): Seq[String] =
   val shared = Seq(
     "-encoding", "utf8",

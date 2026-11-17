@@ -26,7 +26,9 @@ object DynVerPlugin extends AutoPlugin {
     val previousStableVersion  = settingKey[Option[String]]("The last stable version as seen from the current commit (does not include the current commit's version/tag)")
 
     val dynverAssertTagVersion = assertTagVersion // Asserts if the version derives from git tags
+    @transient
     val dynverCheckVersion     = taskKey[Boolean]("Checks if version and dynver match")
+    @transient
     val dynverAssertVersion    = taskKey[Unit]("Asserts if version and dynver match")
   }
   import autoImport._
