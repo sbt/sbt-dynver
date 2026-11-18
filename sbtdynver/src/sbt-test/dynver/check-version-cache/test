@@ -1,0 +1,10 @@
+> initialiseRepository
+> reload
+> checkMatchingVersion
+> dynverAssertVersion
+$ copy-file dirty-marker.txt marker.txt
+> checkChangedVersion
+-> dynverAssertVersion
+$ copy-file clean-marker.txt marker.txt
+> checkMatchingVersion
+> dynverAssertVersion

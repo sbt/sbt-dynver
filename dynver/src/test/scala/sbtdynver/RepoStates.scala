@@ -35,7 +35,7 @@ sealed class RepoStates(tagPrefix: String) {
     var git: Git = _
     var sha      = "undefined"
 
-    def init         = andThis { git = Git.init.setDirectory(dir).call() }
+    def init         = andThis { git = Git.init.setInitialBranch("master").setDirectory(dir).call() }
     def dirty        = {
       // We randomize the content added otherwise we will get the same git hash for two separate commits
       // because our commits are made at almost the same time
